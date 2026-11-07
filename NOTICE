@@ -1,0 +1,23 @@
+Philippine Local Government Unit (LGU) Laravel GovSuite & Development Standards
+Copyright 2026 Ricky Bulalakaw, Information and Communications Technology Office (ICTO), Municipality of Bayambang
+
+This product includes software developed by Ricky Bulalakaw and the Information and
+Communications Technology Office (ICTO) of the Municipality of Bayambang, Philippines.
+
+TRADEMARK & MUNICIPAL SEAL NOTICE:
+The names "Municipality of Bayambang", "Bayambang ICTO", and associated municipal logos,
+crests, and official seals are official designations of the Local Government Unit of Bayambang.
+Under Section 6 of the Apache License 2.0, this license does not grant permission to use the
+trade names, trademarks, service marks, or official municipal seals of the Licensor, except as
+required for reasonable and customary use in describing the origin of the Work.
+
+STATUTORY DISCLAIMER:
+This suite provides technical software architecture patterns, helper classes, and heuristic
+auditing tools designed to facilitate alignment with Republic Act No. 10173 (Data Privacy Act of 2012),
+Republic Act No. 11032 (Ease of Doing Business and Efficient Government Service Delivery Act of 2018),
+and Commission on Audit (COA) Circulars.
+
+This software does not constitute formal legal counsel or statutory certification from the
+National Privacy Commission (NPC), the Anti-Red Tape Authority (ARTA), or the Commission on Audit (COA).
+Each implementing agency, municipal office, and software contractor remains solely responsible
+for conducting independent legal reviews and security compliance audits for their deployments.

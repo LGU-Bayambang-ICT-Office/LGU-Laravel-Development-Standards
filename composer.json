@@ -1,0 +1,62 @@
+{
+    "name": "lgu-bayambang-ict-office/lgu-laravel-development-standards",
+    "description": "Philippine LGU statutory engineering standards, architecture traits, AI compliance auditor, and governance protocols for Laravel.",
+    "type": "library",
+    "license": "Apache-2.0",
+    "keywords": [
+        "laravel",
+        "lgu",
+        "philippines",
+        "governance",
+        "dpa-ra10173",
+        "arta-ra11032",
+        "coa",
+        "compliance",
+        "ai-audit",
+        "livewire"
+    ],
+    "authors": [
+        {
+            "name": "Ricky Bulalakaw",
+            "email": "bulalakawr@bayambang.gov.ph",
+            "role": "Lead Architect & Head, Information and Communications Technology Office"
+        },
+        {
+            "name": "Information and Communications Technology Office (ICTO)",
+            "email": "icto@bayambang.gov.ph",
+            "role": "Issuing Authority"
+        }
+    ],
+    "require": {
+        "php": "^8.2|^8.3|^8.4",
+        "illuminate/support": "^11.0|^12.0|^13.0",
+        "illuminate/database": "^11.0|^12.0|^13.0",
+        "illuminate/console": "^11.0|^12.0|^13.0",
+        "illuminate/http": "^11.0|^12.0|^13.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0",
+        "pestphp/pest": "^3.0",
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.20"
+    },
+    "autoload": {
+        "psr-4": {
+            "Lgu\\GovSuite\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Lgu\\GovSuite\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Lgu\\GovSuite\\LguServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

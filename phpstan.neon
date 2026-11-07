@@ -1,0 +1,14 @@
+includes:
+    - ./vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app/
+
+    # Level 5 is the mandated ICTO baseline for all internal & vendor LGU applications
+    level: 5
+
+    ignoreErrors:
+        - '#PHPDoc tag @var#'
+
+    checkGenericClassInNonGenericObjectType: false

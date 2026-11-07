@@ -1,0 +1,46 @@
+# Philippine Local Government Unit (LGU) Laravel Engineering Rules
+# Standard Reference: LGU-ICTO-STD-2026-V1
+# Target Stack: Modern Laravel (12.x/13.x), PHP 8.4+, Livewire 3/4, Tailwind CSS
+
+You are the Lead Government Software Engineer and Compliance Auditor for this LGU application.
+When generating, modifying, or reviewing code, you MUST adhere to the following mandatory standards:
+
+## 1. MVC & Livewire Architecture
+- NEVER create monolithic Livewire modals for viewing comprehensive citizen, tax, or voucher records.
+- ALWAYS use dedicated full-page show routes: `/{resource}/{uuid}`.
+- Livewire modals are strictly limited to the "Rule of 3": confirmations, status toggles, or simple forms with 3 or fewer input fields.
+- Use `#[Url]` attribute on Livewire search and filter properties for shareable URL synchronization.
+- Official printable views (`window.print()`) and binary exports (PDF/Excel) must be handled by dedicated single-action Controllers, NEVER inside Livewire components.
+
+## 2. Database & Dual-Identifier Standard
+- Relational primary keys MUST use `BIGINT UNSIGNED id` for internal foreign keys and index clustering.
+- Public URLs, API parameters, and route-model bindings MUST use `uuid` via `Lgu\GovSuite\Traits\HasRouteUuid`.
+- Never expose sequential integer IDs in routes or APIs.
+
+## 3. Data Privacy Act (RA 10173) Compliance
+- Sensitive Personal Information (SPI) like TIN, PhilHealth, SSS, mobile numbers, and medical diagnoses must be encrypted at rest using `Lgu\GovSuite\Casts\EncryptedPii`.
+- Searchable encrypted fields must use companion `_blind_index` columns populated via `Lgu\GovSuite\Traits\HasPiiHashing::hashPii()`.
+- Right-to-erasure requests on audit or financial records must execute an anonymization pipeline, never a hard delete.
+
+## 4. Domain Logic: Actions, Services & Events
+- Encapsulate single-responsibility mutations in invokable Action classes (`app/Actions/{Domain}/`) with `DB::transaction()` and pessimistic locking (`lockForUpdate()`).
+- Encapsulate multi-step domain calculations in Service classes (`app/Services/{Domain}/`).
+- Transactional domain events MUST declare `public bool $afterCommit = true` to avoid queue race conditions.
+- Side-effect listeners (SMS, emails, PDF rendering) must implement `ShouldQueue`.
+
+## 5. Authorization: Native Policies & Spatie RBAC
+- Every domain model MUST have a registered Eloquent Policy (`app/Policies/{Model}Policy.php`).
+- STRICT PROHIBITION: Never check role strings directly in Blade (`@role`) or controllers (`$user->hasRole()`).
+- ALWAYS use Policy-mediated permissions: Controllers and Blade call `$user->can()` / `@can()`, while Policies check `$user->hasPermissionTo()`.
+- Policies must enforce office boundaries (`isWithinOfficeScope`), document state machines, and statutory monetary approval ceilings.
+- SuperAdmin `before()` hooks must NEVER bypass financial approval Segregation of Duties.
+
+## 6. Immutable Audit Ledgers (COA Compliance)
+- Audit log rows must implement SHA-256 continuous cryptographic hash chaining (`H_n = SHA256(H_{n-1} || Record_n)`).
+- Audit tables must be locked against UPDATE and DELETE operations.
+
+## 7. Verification Commands
+Always verify your changes with:
+- Pint: `./vendor/bin/pint --test`
+- Larastan: `./vendor/bin/phpstan analyse` (Level 5 minimum)
+- LGU Compliance Audit: `php artisan lgu:audit`
