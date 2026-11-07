@@ -4,7 +4,7 @@ Official software development protocols, architecture traits, AI compliance audi
 
 **Author & Lead Architect:** Ricky Bulalakaw, Head, Information and Communications Technology Office (`bulalakawr@bayambang.gov.ph`)  
 **Issuing Authority:** Information and Communications Technology Office (ICTO), Municipality of Bayambang  
-**License:** [Apache 2.0](LICENSE)
+**License:** [Apache 2.0](LICENSE) | **Security Policy:** [SECURITY.md](SECURITY.md)
 
 ---
 
