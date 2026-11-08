@@ -2,8 +2,8 @@
 ## Comprehensive Engineering Handbook & Vendor Governance Standard
 
 **Document Control Reference:** `LGU-ICTO-STD-2026-V1`  
-**Author & Lead Architect:** Ricky Bulalakaw, Head, Information and Communications Technology Office (`bulalakawr@bayambang.gov.ph`)  
 **Issuing Authority:** Information and Communications Technology Office (ICTO), Municipality of Bayambang  
+**Contact:** `icto@bayambang.gov.ph`  
 **Target Environment:** Modern Laravel (12.x / 13.x), PHP 8.4+, PostgreSQL 16+ / MySQL 8.4+  
 **Scope of Authority:** Mandatory for all in-house software engineering teams, contractual technical staff, and external software vendors delivering systems to the Local Government Unit (LGU).
 
@@ -1684,10 +1684,9 @@ Prior to final acceptance, certificate of completion issuance, and procurement p
    - Fully executed `VENDOR_DELIVERY_CHECKLIST.md` signed by the Vendor Technical Lead, LGU Data Protection Officer, and ICTO Department Head.
 
 ---
-**Author & Lead Architect:**  
-**Ricky Bulalakaw**  
-Head, Information and Communications Technology Office  
+**Issuing Authority:**  
+**Information and Communications Technology Office (ICTO)**  
 Municipality of Bayambang  
-Contact: `bulalakawr@bayambang.gov.ph`  
+Contact: `icto@bayambang.gov.ph`  
 
 *Approved and Issued by the Information and Communications Technology Office (ICTO), Municipality of Bayambang.*

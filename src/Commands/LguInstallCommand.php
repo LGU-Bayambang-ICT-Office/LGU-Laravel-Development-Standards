@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\File;
 /**
  * LGU GovSuite Asset Installer.
  *
- * @author Ricky Bulalakaw <bulalakawr@bayambang.gov.ph>
+ * @author Ricky Bulalakaw
  */
 class LguInstallCommand extends Command
 {

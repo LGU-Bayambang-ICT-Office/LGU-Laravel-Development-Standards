@@ -11,7 +11,7 @@ use Lgu\GovSuite\Commands\LguInstallCommand;
 /**
  * LGU GovSuite Service Provider.
  *
- * @author Ricky Bulalakaw <bulalakawr@bayambang.gov.ph>
+ * @author Ricky Bulalakaw
  * @copyright 2026 Information and Communications Technology Office (ICTO), Municipality of Bayambang
  */
 class LguServiceProvider extends ServiceProvider

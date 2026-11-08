@@ -1,7 +1,7 @@
 # Security Policy & Vulnerability Disclosure
 
 **Issuing Authority:** Information and Communications Technology Office (ICTO), Municipality of Bayambang  
-**Lead Maintainer:** Ricky Bulalakaw, Head, ICTO (`bulalakawr@bayambang.gov.ph`)  
+**Contact:** `icto@bayambang.gov.ph`  
 **Package:** `lgu-bayambang-ict-office/lgu-laravel-development-standards`
 
 The Information and Communications Technology Office (ICTO) takes the security of municipal information systems, personal data privacy (RA 10173), and public trust with utmost seriousness. We appreciate the efforts of security researchers and engineers in reporting vulnerabilities responsibly.
@@ -38,8 +38,7 @@ Please report security issues using one of the two private channels below:
 
 ### Option B: Direct Confidential Email
 If you prefer email or do not have a GitHub account, send your report to:
-* **Primary:** `bulalakawr@bayambang.gov.ph` (Ricky Bulalakaw, Head of ICTO)
-* **Secondary:** `icto@bayambang.gov.ph` (Municipal ICT Office)
+* **Email:** `icto@bayambang.gov.ph` (Information and Communications Technology Office)
 * **Subject Format:** `[SECURITY DISCLOSURE] lgu-laravel-development-standards - <Brief Description>`
 
 ---

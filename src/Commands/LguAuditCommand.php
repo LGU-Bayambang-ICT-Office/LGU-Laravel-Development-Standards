@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\File;
 /**
  * LGU Engineering Standards Compliance Auditor.
  *
- * @author Ricky Bulalakaw <bulalakawr@bayambang.gov.ph>
+ * @author Ricky Bulalakaw
  */
 class LguAuditCommand extends Command
 {

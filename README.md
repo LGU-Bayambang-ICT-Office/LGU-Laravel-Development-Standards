@@ -2,8 +2,8 @@
 
 Official software development protocols, architecture traits, AI compliance auditor, and governance standards for the Local Government Unit (LGU).
 
-**Author & Lead Architect:** Ricky Bulalakaw, Head, Information and Communications Technology Office (`bulalakawr@bayambang.gov.ph`)  
 **Issuing Authority:** Information and Communications Technology Office (ICTO), Municipality of Bayambang  
+**Contact:** `icto@bayambang.gov.ph`  
 **License:** [Apache 2.0](LICENSE) | **Security Policy:** [SECURITY.md](SECURITY.md)
 
 ---
@@ -166,10 +166,9 @@ This package provides software architecture patterns, technical components, and 
 This software and its documentation **do not constitute formal legal counsel** or statutory certification from the National Privacy Commission (NPC), the Anti-Red Tape Authority (ARTA), or the Commission on Audit (COA). Implementing agencies and third-party software contractors remain solely responsible for conducting their own independent security audits and institutional legal reviews.
 
 ---
-**Authored & Engineered by:**  
-**Ricky Bulalakaw**  
-Head, Information and Communications Technology Office  
+**Maintained & Engineered by:**  
+**Information and Communications Technology Office (ICTO)**  
 Municipality of Bayambang  
-Contact: `bulalakawr@bayambang.gov.ph`  
+Contact: `icto@bayambang.gov.ph`  
 
 *Approved and Issued by the Information and Communications Technology Office (ICTO), Municipality of Bayambang.*

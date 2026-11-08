@@ -1,8 +1,8 @@
 # LGU ICTO Vendor Delivery & Project Handover Acceptance Checklist
 
 **Document Control Reference:** `ICTO-STD-CHK-01`  
-**Author & Lead Architect:** Ricky Bulalakaw, Head, Information and Communications Technology Office (`bulalakawr@bayambang.gov.ph`)  
 **Issuing Authority:** Information and Communications Technology Office (ICTO), Municipality of Bayambang  
+**Contact:** `icto@bayambang.gov.ph`  
 **Applicability:** All internal ICTO software engineering projects and third-party vendor deliveries contracted by the Local Government Unit.
 
 ---
@@ -113,4 +113,4 @@
 | **Vendor / Lead Software Engineer** | ___________________________ | ___________________________ | ____________ |
 | **Data Protection Officer (DPO)** | ___________________________ | ___________________________ | ____________ |
 | **ICTO Technical Lead / QA** | ___________________________ | ___________________________ | ____________ |
-| **ICTO Department Head** | **Ricky Bulalakaw**, Head, ICTO | ___________________________ | ____________ |
+| **ICTO Department Head** | Head, ICTO | ___________________________ | ____________ |
