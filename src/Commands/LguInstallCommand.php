@@ -1,11 +1,9 @@
 <?php
 
 declare(strict_types=1);
-
 namespace Lgu\GovSuite\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
 
 /**
  * LGU GovSuite Asset Installer.
@@ -28,27 +26,44 @@ class LguInstallCommand extends Command
 
         $force = (bool) $this->option('force');
 
+        $options = [
+            'lgu-config' => 'Agency Configuration (config/lgu.php)',
+            'lgu-dev-tools' => 'Code Quality Presets (pint.json, phpstan.neon)',
+            'lgu-ai-rules' => 'AI Assistant Compliance Rules (.cursorrules, CLAUDE.md, .gemini/rules)',
+            'lgu-docs' => 'Master Standard Handbook & Vendor Delivery Checklist (docs/)',
+            'lgu-migrations' => 'COA Audit Activity Table & Database Triggers',
+            'lgu-stubs' => 'Customizable PHP Stubs (app/Casts, app/Traits, etc.)',
+        ];
+
+        $defaultSelection = ['lgu-config', 'lgu-dev-tools', 'lgu-ai-rules', 'lgu-docs'];
+
         if ($this->option('all')) {
-            $tags = ['lgu-config', 'lgu-dev-tools', 'lgu-docs', 'lgu-ai-rules', 'lgu-migrations'];
-        } else {
-            $tags = $this->choice(
-                'Select assets to publish into your Laravel application (comma-separated for multiple):',
-                [
-                    'lgu-config'     => 'Agency Configuration (config/lgu.php)',
-                    'lgu-dev-tools'  => 'Code Quality Presets (pint.json, phpstan.neon)',
-                    'lgu-ai-rules'   => 'AI Assistant Compliance Rules (.cursorrules, CLAUDE.md, .gemini/rules)',
-                    'lgu-docs'       => 'Master Standard Handbook & Vendor Delivery Checklist (docs/)',
-                    'lgu-migrations' => 'COA Audit Activity Table & Database Triggers',
-                    'lgu-stubs'      => 'Customizable PHP Stubs (app/Casts, app/Traits, etc.)',
-                ],
-                'lgu-config,lgu-dev-tools,lgu-ai-rules,lgu-docs',
-                multiple: true
+            $tags = array_keys($options);
+        } elseif (function_exists('Laravel\Prompts\multiselect')) {
+            $tags = \Laravel\Prompts\multiselect(
+                label: 'Select assets to publish into your Laravel application:',
+                options: $options,
+                default: $defaultSelection,
+                hint: 'Use arrow keys to navigate, Space to select/deselect, and Enter to submit.',
             );
+        } else {
+            $tags = (array) $this->choice(
+                'Select assets to publish into your Laravel application (comma-separated for multiple):',
+                $options,
+                implode(',', $defaultSelection),
+                multiple: true,
+            );
+        }
+
+        if (empty($tags)) {
+            $this->warn('No assets selected. Installation skipped.');
+
+            return self::SUCCESS;
         }
 
         foreach ($tags as $tag) {
             $this->call('vendor:publish', [
-                '--tag'   => $tag,
+                '--tag' => $tag,
                 '--force' => $force,
             ]);
         }

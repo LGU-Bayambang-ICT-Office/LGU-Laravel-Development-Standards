@@ -1,7 +1,6 @@
 <?php
 
 declare(strict_types=1);
-
 namespace Lgu\GovSuite\Observers;
 
 use Illuminate\Database\Eloquent\Model;
@@ -47,15 +46,15 @@ class AuditActivityObserver
 
         // 2. Extract and sort attributes consistently
         $attributes = [
-            'office_id'      => $model->office_id ?? null,
-            'causer_id'      => $model->causer_id ?? null,
-            'causer_type'    => $model->causer_type ?? null,
-            'subject_id'     => $model->subject_id ?? null,
-            'subject_type'   => $model->subject_type ?? null,
-            'event'          => $model->event ?? null,
-            'description'    => $model->description ?? null,
-            'properties'     => $model->properties ?? null,
-            'created_at'     => $model->created_at ? $model->created_at->toIso8601String() : now()->toIso8601String(),
+            'office_id' => $model->office_id ?? null,
+            'causer_id' => $model->causer_id ?? null,
+            'causer_type' => $model->causer_type ?? null,
+            'subject_id' => $model->subject_id ?? null,
+            'subject_type' => $model->subject_type ?? null,
+            'event' => $model->event ?? null,
+            'description' => $model->description ?? null,
+            'properties' => $model->properties ?? null,
+            'created_at' => $model->created_at ? $model->created_at->toIso8601String() : now()->toIso8601String(),
         ];
         ksort($attributes);
 

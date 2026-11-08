@@ -1,7 +1,6 @@
 <?php
 
 declare(strict_types=1);
-
 namespace Lgu\GovSuite\Traits;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,7 +21,7 @@ trait BelongsToOffice
      */
     protected static function bootBelongsToOffice(): void
     {
-        static::addGlobalScope(new OfficeScope());
+        static::addGlobalScope(new OfficeScope);
 
         static::creating(function ($model) {
             $sessionKey = Config::get('lgu.office.session_key', 'active_office_id');

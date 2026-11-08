@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Observers;
 
 use App\Models\AuditActivity;
@@ -43,15 +42,15 @@ class AuditActivityObserver
 
         // 2. Extract and sort attributes consistently
         $attributes = [
-            'office_id'      => $model->office_id,
-            'causer_id'      => $model->causer_id,
-            'causer_type'    => $model->causer_type,
-            'subject_id'     => $model->subject_id,
-            'subject_type'   => $model->subject_type,
-            'event'          => $model->event,
-            'description'    => $model->description,
-            'properties'     => $model->properties,
-            'created_at'     => $model->created_at ? $model->created_at->toIso8601String() : now()->toIso8601String(),
+            'office_id' => $model->office_id,
+            'causer_id' => $model->causer_id,
+            'causer_type' => $model->causer_type,
+            'subject_id' => $model->subject_id,
+            'subject_type' => $model->subject_type,
+            'event' => $model->event,
+            'description' => $model->description,
+            'properties' => $model->properties,
+            'created_at' => $model->created_at ? $model->created_at->toIso8601String() : now()->toIso8601String(),
         ];
         ksort($attributes);
 

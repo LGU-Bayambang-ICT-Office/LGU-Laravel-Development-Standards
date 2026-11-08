@@ -10,5 +10,3 @@ parameters:
 
     ignoreErrors:
         - '#PHPDoc tag @var#'
-
-    checkGenericClassInNonGenericObjectType: false

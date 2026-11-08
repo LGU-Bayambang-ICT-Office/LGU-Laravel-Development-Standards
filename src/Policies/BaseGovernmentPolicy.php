@@ -1,7 +1,6 @@
 <?php
 
 declare(strict_types=1);
-
 namespace Lgu\GovSuite\Policies;
 
 use Illuminate\Auth\Access\HandlesAuthorization;

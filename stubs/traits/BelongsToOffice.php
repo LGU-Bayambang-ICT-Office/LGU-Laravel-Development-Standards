@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Traits;
 
 use App\Models\Office;
@@ -19,7 +18,7 @@ trait BelongsToOffice
      */
     protected static function bootBelongsToOffice(): void
     {
-        static::addGlobalScope(new OfficeScope());
+        static::addGlobalScope(new OfficeScope);
 
         static::creating(function ($model) {
             if (empty($model->office_id) && session()->has('active_office_id')) {

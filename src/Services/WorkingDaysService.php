@@ -1,12 +1,10 @@
 <?php
 
 declare(strict_types=1);
-
 namespace Lgu\GovSuite\Services;
 
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -124,7 +122,7 @@ class WorkingDaysService
         int|string $documentId,
         CarbonInterface $suspensionDate,
         string $suspensionReason,
-        int $suspensionDays = 1
+        int $suspensionDays = 1,
     ): void {
         $document = $documentModelClass::findOrFail($documentId);
 
@@ -137,7 +135,7 @@ class WorkingDaysService
 
         $document->update([
             'sla_due_at' => $newDue,
-            'sla_notes'  => trim(($document->sla_notes ?? '') . " | Extended by {$suspensionDays} day(s) due to: {$suspensionReason}"),
+            'sla_notes' => trim(($document->sla_notes ?? '') . " | Extended by {$suspensionDays} day(s) due to: {$suspensionReason}"),
         ]);
     }
 }

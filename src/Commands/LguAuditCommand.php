@@ -1,7 +1,6 @@
 <?php
 
 declare(strict_types=1);
-
 namespace Lgu\GovSuite\Commands;
 
 use Illuminate\Console\Command;
@@ -22,8 +21,11 @@ class LguAuditCommand extends Command
     protected $description = 'Audit host application for compliance with Philippine LGU Laravel Engineering Standards';
 
     protected array $results = [];
+
     protected int $failCount = 0;
+
     protected int $warnCount = 0;
+
     protected int $passCount = 0;
 
     public function handle(): int
@@ -66,8 +68,12 @@ class LguAuditCommand extends Command
             $this->addResult('Quality Tools', 'Pint & Larastan Presets', 'PASS', 'pint.json and phpstan.neon present at project root.');
         } else {
             $missing = [];
-            if (! $hasPint) $missing[] = 'pint.json';
-            if (! $hasPhpStan) $missing[] = 'phpstan.neon';
+            if (! $hasPint) {
+                $missing[] = 'pint.json';
+            }
+            if (! $hasPhpStan) {
+                $missing[] = 'phpstan.neon';
+            }
             $this->addResult('Quality Tools', 'Pint & Larastan Presets', 'FAIL', 'Missing: ' . implode(', ', $missing) . '. Run `php artisan lgu:install` to publish.');
         }
     }
@@ -80,6 +86,7 @@ class LguAuditCommand extends Command
         $modelFiles = $this->getPhpFiles(app_path('Models'));
         if (empty($modelFiles)) {
             $this->addResult('Database & Models', 'Dual-Identifier Standard', 'WARN', 'No models found in app/Models.');
+
             return;
         }
 
@@ -136,7 +143,7 @@ class LguAuditCommand extends Command
         } else {
             $details = [];
             foreach ($flaggedModels as $model => $fields) {
-                $details[] = "{$model} (" . implode(', ', array_unique($fields)) . ")";
+                $details[] = "{$model} (" . implode(', ', array_unique($fields)) . ')';
             }
             $this->addResult('Data Privacy (RA 10173)', 'SPI At-Rest Field Encryption', 'FAIL', 'Unencrypted SPI fields: ' . implode('; ', $details) . '. Apply EncryptedPii cast.');
         }
@@ -209,6 +216,7 @@ class LguAuditCommand extends Command
         $eventFiles = $this->getPhpFiles(app_path('Events'));
         if (empty($eventFiles)) {
             $this->addResult('Event Architecture', 'Transactional Event afterCommit Guard', 'PASS', 'No custom events registered or all events conformant.');
+
             return;
         }
 
@@ -266,9 +274,9 @@ class LguAuditCommand extends Command
 
         $this->results[] = [
             'category' => $category,
-            'check'    => $check,
-            'status'   => $status,
-            'message'  => $message,
+            'check' => $check,
+            'status' => $status,
+            'message' => $message,
         ];
     }
 
@@ -320,14 +328,14 @@ class LguAuditCommand extends Command
     protected function outputJson(): void
     {
         $payload = [
-            'standard'   => 'LGU-ICTO-STD-2026-V1',
-            'summary'    => [
+            'standard' => 'LGU-ICTO-STD-2026-V1',
+            'summary' => [
                 'passed' => $this->passCount,
                 'warned' => $this->warnCount,
                 'failed' => $this->failCount,
                 'status' => $this->failCount === 0 ? 'COMPLIANT' : 'NON_COMPLIANT',
             ],
-            'results'    => $this->results,
+            'results' => $this->results,
         ];
 
         $this->line(json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
@@ -336,10 +344,10 @@ class LguAuditCommand extends Command
     protected function outputMarkdown(): void
     {
         $this->line("# LGU Engineering Compliance Audit Report\n");
-        $this->line("**Standard:** `LGU-ICTO-STD-2026-V1`  ");
-        $this->line("**Audit Result:** " . ($this->failCount === 0 ? "✅ COMPLIANT" : "❌ NON-COMPLIANT") . "\n");
-        $this->line("| Category | Compliance Check | Status | Details |");
-        $this->line("| :--- | :--- | :---: | :--- |");
+        $this->line('**Standard:** `LGU-ICTO-STD-2026-V1`  ');
+        $this->line('**Audit Result:** ' . ($this->failCount === 0 ? '✅ COMPLIANT' : '❌ NON-COMPLIANT') . "\n");
+        $this->line('| Category | Compliance Check | Status | Details |');
+        $this->line('| :--- | :--- | :---: | :--- |');
 
         foreach ($this->results as $r) {
             $icon = match ($r['status']) {

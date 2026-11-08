@@ -1,7 +1,6 @@
 <?php
 
 declare(strict_types=1);
-
 namespace Lgu\GovSuite\Casts;
 
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Support\Csp;
 
 use Spatie\Csp\Directive;
