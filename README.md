@@ -4,7 +4,7 @@ Official software development protocols, architecture traits, AI compliance audi
 
 **Issuing Authority:** Information and Communications Technology Office (ICTO), Municipality of Bayambang  
 **Contact:** `icto@bayambang.gov.ph`  
-**License:** [Apache 2.0](LICENSE) | **Security Policy:** [SECURITY.md](SECURITY.md)
+**License:** [Apache 2.0](LICENSE) | **Security Policy:** [SECURITY.md](SECURITY.md) | **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
 
@@ -149,6 +149,20 @@ php artisan lgu:audit --strict
 # 5. Verify database migration reversibility & deterministic seeding
 php artisan migrate:fresh --seed
 ```
+
+---
+
+## 🤝 Contributing & Pull Requests
+
+We welcome pull requests from public sector developers, IT teams, vendor contractors, and the open-source community to improve statutory alignment, code quality, and developer tooling.
+
+Before submitting code, please review our **[CONTRIBUTING.md](CONTRIBUTING.md)** for:
+* Development environment setup and automated quality gates (`pint`, `phpunit`, `phpstan`)
+* Philippine statutory guidelines (RA 10173 DPA, RA 11032 ARTA, COA Circulars)
+* Conventional commit message conventions and PR submission checklist
+
+> [!NOTE]
+> Suspected security vulnerabilities should never be submitted via public PRs or issues. Please consult **[SECURITY.md](SECURITY.md)** for confidential disclosure channels.
 
 ---
 

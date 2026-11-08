@@ -1,0 +1,54 @@
+name: "✨ Feature / Statutory Improvement Request"
+description: "Suggest an architectural enhancement, new trait, or statutory capability for the package."
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an improvement! We actively seek contributions that strengthen municipal software standards, streamline vendor delivery, and uphold statutory compliance.
+
+  - type: checkboxes
+    id: statutory_scope
+    attributes:
+      label: Statutory & Governance Scope (select all that apply)
+      description: Does this enhancement relate to specific Philippine laws or administrative guidelines?
+      options:
+        - label: "**RA 10173 (Data Privacy Act of 2012):** Encryption, blind indexing, data subject rights, consent ledgers"
+        - label: "**RA 11032 (Ease of Doing Business / ARTA):** 3-7-20 SLA engine, citizen satisfaction surveys, zero-contact processing"
+        - label: "**COA Circulars:** Audit logging, digital voucher processing, immutable ledger rules"
+        - label: "**CSC / NAP Standards:** Personnel appointments, leave credits, records disposition schedules"
+        - label: "**Core Architecture / Developer Tooling:** Artisan commands, Pint rules, Larastan presets, testing helpers"
+
+  - type: textarea
+    id: problem_statement
+    attributes:
+      label: Motivation / Problem Statement
+      description: What challenge, agency requirement, or technical gap does this feature address?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed Solution & API Design
+      description: Describe your proposed architectural approach, class/trait design, or Artisan command syntax.
+      placeholder: |
+        Suggested class name, trait, or configuration:
+        ```php
+        use Lgu\GovSuite\Traits\HasArtaSurvey;
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives_considered
+    attributes:
+      label: Alternatives Considered
+      description: Describe any alternative solutions, packages, or workarounds you considered.
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Add any references to official government circulars, legal provisions, or relevant diagrams.

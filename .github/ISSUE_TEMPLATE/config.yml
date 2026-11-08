@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: "🚨 Report a Security Vulnerability"
+    url: https://github.com/LGU-Bayambang-ICT-Office/LGU-Laravel-Development-Standards/security/advisories/new
+    about: "Suspected security flaws, vulnerability disclosures, or citizen data risks must be reported privately."
+  - name: "🏛️ Confidential Agency Inquiries"
+    url: mailto:icto@bayambang.gov.ph
+    about: "Official communications with the Information and Communications Technology Office (ICTO), Municipality of Bayambang."
