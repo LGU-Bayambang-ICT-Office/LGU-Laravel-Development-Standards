@@ -12,10 +12,11 @@ When generating, modifying, or reviewing code, you MUST adhere to the following 
 - Use `#[Url]` attribute on Livewire search and filter properties for shareable URL synchronization.
 - Official printable views (`window.print()`) and binary exports (PDF/Excel) must be handled by dedicated single-action Controllers, NEVER inside Livewire components.
 
-## 2. Database & Dual-Identifier Standard
+## 2. Database, Dual-Identifiers & Balanced Query Architecture
 - Relational primary keys MUST use `BIGINT UNSIGNED id` for internal foreign keys and index clustering.
 - Public URLs, API parameters, and route-model bindings MUST use `uuid` via `Lgu\GovSuite\Traits\HasRouteUuid`.
 - Never expose sequential integer IDs in routes or APIs.
+- RAW SQL LIMITATION: Default to Eloquent ORM. RAW SQL (`DB::raw`, `whereRaw`, etc.) is strictly forbidden in Livewire components and Blade views. Permitted only in Actions/Services for critical need (aggregations, window functions, locks) with 100% PDO parameter bindings and explicit `office_id` tenant scoping.
 
 ## 3. Data Privacy Act (RA 10173) Compliance
 - Sensitive Personal Information (SPI) like TIN, PhilHealth, SSS, mobile numbers, and medical diagnoses must be encrypted at rest using `Lgu\GovSuite\Casts\EncryptedPii`.

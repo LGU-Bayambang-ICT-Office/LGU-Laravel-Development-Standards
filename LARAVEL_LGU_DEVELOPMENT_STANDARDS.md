@@ -38,7 +38,13 @@
    - [6.3 Dynamic Settings Hydration: The hydrateIhrisSettings Pattern](#63-dynamic-settings-hydration-the-hydrateihrissettings-pattern)
    - [6.4 Interactive Modification via Laravel Prompts & Artisan Commands](#64-interactive-modification-via-laravel-prompts--artisan-commands)
    - [6.5 Architectural Rationale, Benefits, and Caveats](#65-architectural-rationale-benefits-and-caveats)
-7. [Database Design & The Dual-Identifier Standard](#7-database-design--the-dual-identifier-standard)
+7. [Database Design, The Dual-Identifier Standard & Balanced Query Architecture](#7-database-design-the-dual-identifier-standard--balanced-query-architecture)
+   - [7.1 The Core Mandate](#71-the-core-mandate)
+   - [7.2 Migration Standard](#72-migration-standard)
+   - [7.3 Eloquent Model Implementation](#73-eloquent-model-implementation)
+   - [7.4 Foreign Key Deletion Rules](#74-foreign-key-deletion-rules)
+   - [7.5 Balanced Database Query Architecture & RAW SQL Policy](#75-balanced-database-query-architecture--raw-sql-policy)
+   - [7.6 Architectural Rationale, Benefits, and Caveats](#76-architectural-rationale-benefits-and-caveats)
 8. [Multi-Office Department Scoping & Data Isolation](#8-multi-office-department-scoping--data-isolation)
 9. [Security Engineering & Municipal Workstation Hardening](#9-security-engineering--municipal-workstation-hardening)
 10. [Immutable Audit Ledgers & Cryptographic Verification](#10-immutable-audit-ledgers--cryptographic-verification)
@@ -907,13 +913,13 @@ class ConfigureDpoCommand extends Command
 
 ---
 
-## 7. Database Design & The Dual-Identifier Standard
+## 7. Database Design, The Dual-Identifier Standard & Balanced Query Architecture
 
 ### 7.1 The Core Mandate
-Every database table and Eloquent model must strictly implement the **Dual-Identifier Standard**:
+Every **primary domain entity (aggregate root) and route-exposed Eloquent model** must strictly implement the **Dual-Identifier Standard**:
 
 1. **Internal Performance (The Engine Key):**
-   - Every table must use an auto-incrementing 64-bit unsigned integer (`BIGINT UNSIGNED id`) as its primary key.
+   - Every relational table must use an auto-incrementing 64-bit unsigned integer (`BIGINT UNSIGNED id`) as its primary key.
    - All internal relationships, foreign keys, table joins, pivot tables, and database indexes must strictly reference this integer `id`.
    - **Architectural Rationale:** Relational engines (InnoDB / PostgreSQL) cluster table data physically by primary key. Sequential integers append new rows to the rightmost leaf of the B+Tree with zero page splits and 0% index fragmentation. Unsigned integers take only 8 bytes (compared to 36 bytes for UUID strings), reducing index buffer pool memory consumption by up to **4.5x** across high-volume transaction lines.
 
@@ -921,6 +927,13 @@ Every database table and Eloquent model must strictly implement the **Dual-Ident
    - Internal auto-incrementing integer IDs must **never** be exposed in browser URLs, route parameters, public JSON APIs, QR codes, or client-facing receipts.
    - Exposing sequential integers allows malicious users to crawl records (e.g., `/vouchers/1`, `/vouchers/2`), deduce total municipal transaction volume, and mount Insecure Direct Object Reference (IDOR) attacks.
    - Every model exposed to routes must define an indexed, immutable `uuid` column (`UUID v4`), bound via the `HasRouteUuid` trait (`stubs/traits/HasRouteUuid.php`).
+
+3. **Explicit Scope & Exemptions from UUID Generation:**
+   To prevent unnecessary memory bloat and index overhead in the database buffer pool (`innodb_buffer_pool_size`), the following categories are **explicitly exempt** from requiring a `uuid` column:
+   - **Pivot / Many-to-Many Junction Tables:** Tables resolving relationships (e.g., `role_user`, `permission_role`, `disbursement_claimant`, `document_tag`) remain pure integer-based composite keys.
+   - **Dependent Child Line Items / Transaction Sub-Lines:** Detail rows (e.g., `voucher_items`, `journal_entry_lines`, `payroll_allowance_lines`) accessed exclusively through their parent aggregate root (`/vouchers/{uuid}`) do not need UUIDs unless individually accessible via standalone routes.
+   - **Static Reference Dictionaries & Lookups:** Low-cardinality catalogs (e.g., `barangays`, `tax_categories`, `document_status_types`) queried internally.
+   - **System Infrastructure Tables:** Framework tables (`jobs`, `failed_jobs`, `sessions`, `cache`, `migrations`, `audit_activities`).
 
 ```mermaid
 classDiagram
@@ -934,7 +947,7 @@ classDiagram
     }
 ```
 
-### 6.2 Migration Standard
+### 7.2 Migration Standard
 ```php
 Schema::create('disbursement_vouchers', function (Blueprint $table) {
     // 1. Internal Engine Primary Key
@@ -954,7 +967,7 @@ Schema::create('disbursement_vouchers', function (Blueprint $table) {
 });
 ```
 
-### 6.3 Eloquent Model Implementation
+### 7.3 Eloquent Model Implementation
 ```php
 namespace App\Models;
 
@@ -980,13 +993,113 @@ class DisbursementVoucher extends Model
 - **Rule:** Cascading deletes (`cascadeOnDelete()`) are strictly forbidden on financial, transaction, voucher, personnel, or audit tables.
 - **Mandate:** Schema migrations must specify `onDelete('restrict')` or `restrictOnDelete()` on all historical foreign keys. If a department or user account is deactivated, existing transaction histories must remain intact to satisfy COA and NAP compliance.
 
-### 7.5 Architectural Rationale, Benefits, and Caveats
+### 7.5 Balanced Database Query Architecture & RAW SQL Policy
+
+In enterprise government information systems, database query design must reconcile strict security and multi-tenancy requirements with high-volume transactional and reporting throughput. The LGU adopts a **Balanced Database Architecture**: Eloquent ORM and the fluent Query Builder are the default standard, while raw SQL expressions (`DB::raw()`, `whereRaw()`, `selectRaw()`, `havingRaw()`, `orderByRaw()`, `groupByRaw()`, `DB::select()`, `DB::statement()`) are restricted to **demonstrable critical needs**.
+
+```mermaid
+graph TD
+    Query["Database Query"] --> Type{"Query Layer & Purpose"}
+    Type -->|"UI / Livewire / Blade / Controller"| Prohibited["❌ STRICTLY PROHIBITED<br>Must delegate to Action/Service"]
+    Type -->|"Standard CRUD / Domain Mutators"| Eloquent["✅ Eloquent ORM / Fluent Builder<br>Preserves OfficeScope, Casts & Audit Chains"]
+    Type -->|"Complex Aggregations / Window Functions / Locks"| CriticalNeed{"Critical Need in Action/Service?"}
+    CriticalNeed -->|"Safe with Bindings + OfficeScope"| Permitted["✅ PERMITTED WITH SAFEGUARDS<br>• 100% Parameter Binding<br>• Explicit office_id scoping<br>• Documented rationale"]
+    CriticalNeed -->|"Unescaped Concatenation ($var)"| InjectionFail["❌ HIGH-RISK SQL INJECTION<br>Fails ICTO Automated Audit"]
+```
+
+#### 7.5.1 The Principle: Eloquent by Default
+Eloquent models and the fluent Query Builder provide critical architectural guarantees that must not be bypassed casually:
+1. **Multi-Tenant Office Isolation:** Eloquent automatically attaches global scopes like [`OfficeScope`](#82-the-fail-closed-global-scope), guaranteeing that queries without an active departmental context evaluate to `1 = 0` (fail-closed). Direct low-level SQL (`DB::select()`) bypasses global scopes entirely.
+2. **Data Privacy Casts:** Sensitive Personal Information (SPI) marked with [`EncryptedPii`](#211-at-rest-field-level-encryption) automatically decrypts upon model access. Raw queries expose raw ciphertext or fail to parse cipher blocks.
+3. **Audit Ledger Observers:** Eloquent mutations trigger model observers (such as [`AuditActivityObserver`](#10-immutable-audit-ledgers--cryptographic-verification)), updating SHA-256 cryptographic audit chains. Raw SQL updates leave no application audit footprint.
+
+#### 7.5.2 Strictly Prohibited Layers
+RAW SQL queries are **strictly forbidden** in the following presentation and routing layers:
+- ❌ **Livewire Components (`app/Livewire`):** Placing raw SQL inside component methods violates UI/domain separation and exposes queries to frontend state manipulation.
+- ❌ **Blade Templates (`resources/views`):** Direct SQL in views is a critical architectural violation.
+- ❌ **Resource Controllers (`app/Http/Controllers`):** Standard HTTP controllers must coordinate request validation, policy checks, and call Actions/Services rather than crafting raw database queries.
+
+#### 7.5.3 Permitted Critical Need Scenarios in Backend Layers
+RAW SQL queries (`DB::raw()`, `selectRaw()`, `whereRaw()`, `havingRaw()`, `orderByRaw()`, `groupByRaw()`) are permitted **only inside dedicated Action classes (`app/Actions`), Service classes (`app/Services`), or custom Eloquent Query Builders/Scopes**, under the following critical-need criteria:
+1. **High-Volume Analytical Aggregations:** Summary dashboards and financial balance reconciliations where hydrating thousands of Eloquent model instances would cause server memory exhaustion.
+2. **Advanced SQL Constructs:** Window functions (`ROW_NUMBER() OVER (...)`, `RANK()`), Common Table Expressions (`WITH RECURSIVE`), and statistical partition calculations not natively expressible in fluent Eloquent.
+3. **Database-Level Atomic Operations:** Short-circuit guards (e.g., `whereRaw('1 = 0')`), native spatial calculations (PostGIS `ST_DWithin`, `ST_Distance`), and specialized locking clauses.
+
+#### 7.5.4 Mandatory Safeguards When Using RAW SQL
+Whenever raw queries are utilized in permitted backend layers, engineering teams and vendors must satisfy three non-negotiable safeguards:
+1. **Mandatory PDO Parameter Bindings (Zero String Concatenation):**
+   * Variables must **never** be interpolated directly into raw strings (e.g., `whereRaw("status = '$status'")` or concatenation `DB::raw("... " . $id)`).
+   * All dynamic values must be passed via secondary parameter binding arrays (`whereRaw('status = ?', [$status])` or named parameters).
+2. **Explicit Multi-Tenant Department Scoping:**
+   * Because `DB::table(...)` and `DB::select(...)` bypass Eloquent's `OfficeScope`, queries on multi-office tables must explicitly enforce the `office_id` constraint:
+     ```php
+     DB::table('disbursement_vouchers')
+         ->where('office_id', session('active_office_id'))
+         ->selectRaw('DATE_TRUNC(\'month\', created_at) as month, SUM(gross_amount) as total')
+         ->groupByRaw('1')
+         ->get();
+     ```
+3. **Architectural Justification Comment:**
+   * The developer must document the performance or functional justification in a code comment directly above the raw query invocation.
+
+#### 7.5.5 Code Pattern Comparison: Forbidden vs. Compliant
+
+```php
+// ❌ FORBIDDEN ANTI-PATTERN 1: Raw SQL inside Livewire Component
+namespace App\Livewire\Vouchers;
+
+use Livewire\Component;
+use Illuminate\Support\Facades\DB;
+
+class VoucherLedgerTable extends Component
+{
+    public function render()
+    {
+        // VIOLATION: Raw query directly in presentation component
+        $summary = DB::select("SELECT office_id, SUM(gross_amount) FROM disbursement_vouchers GROUP BY office_id");
+        return view('livewire.vouchers.ledger-table', compact('summary'));
+    }
+}
+
+// ❌ FORBIDDEN ANTI-PATTERN 2: SQL Injection via unescaped interpolation in Controller
+public function search(Request $request)
+{
+    $searchTerm = $request->input('q');
+    // HIGH-RISK VIOLATION: Unescaped string interpolation causes SQL Injection!
+    return Citizen::whereRaw("last_name LIKE '%{$searchTerm}%'")->get();
+}
+
+// ✅ COMPLIANT LGU PATTERN: Encapsulated in Action with safe PDO parameter bindings
+namespace App\Actions\Disbursements;
+
+use App\Models\DisbursementVoucher;
+use Illuminate\Support\Collection;
+
+class AggregateMonthlyDisbursementsAction
+{
+    /**
+     * Critical Need: High-volume financial aggregation bypassing model hydration for memory efficiency.
+     * Safeguards: Uses Eloquent query builder to retain OfficeScope, with safe PDO parameter binding.
+     */
+    public function __invoke(int $fiscalYear): Collection
+    {
+        return DisbursementVoucher::query()
+            ->selectRaw('EXTRACT(MONTH FROM created_at) as fiscal_month, COUNT(*) as voucher_count, SUM(gross_amount) as total_disbursed')
+            ->whereRaw('EXTRACT(YEAR FROM created_at) = ?', [$fiscalYear])
+            ->groupByRaw('EXTRACT(MONTH FROM created_at)')
+            ->orderByRaw('fiscal_month ASC')
+            ->get();
+    }
+}
+```
+
+### 7.6 Architectural Rationale, Benefits, and Caveats
 
 | Dimension | Architectural Evaluation & Trade-offs |
 | :--- | :--- |
-| **Benefits** | • **Optimal B+Tree Index Clustering:** Sequential `BIGINT UNSIGNED id` appends records cleanly with zero page splits and 0% fragmentation on InnoDB & PostgreSQL.<br>• **4.5x Index Memory Savings:** Unsigned integers take only 8 bytes versus 36 bytes for UUID strings, drastically maximizing database buffer pool efficiency (`innodb_buffer_pool_size`).<br>• **Zero IDOR & Scraping Risks:** Route UUIDs eliminate sequential guessing attacks (e.g. `/vouchers/101`, `/vouchers/102`). |
-| **Risks Mitigated** | • Prevents competitor or malicious actor reconnaissance on total municipal transaction volumes and onboarding velocities.<br>• Mitigates severe storage bloat and slow join performance across high-volume transaction lines (`journal_entry_lines`, `pos_transaction_lines`). |
-| **Caveats & Trade-offs** | • **Dual Identifier Maintenance:** Models exposed to routes must use the `HasRouteUuid` trait and maintain an indexed `uuid` column alongside `id`.<br>• **Relational Consistency:** Developers and AI assistants must strictly reference integer `id` for internal foreign keys (`foreignId()`), never foreign UUIDs. |
+| **Benefits** | • **Optimal B+Tree Index Clustering:** Sequential `BIGINT UNSIGNED id` appends records cleanly with zero page splits and 0% fragmentation on InnoDB & PostgreSQL.<br>• **4.5x Index Memory Savings:** Unsigned integers take only 8 bytes versus 36 bytes for UUID strings, drastically maximizing database buffer pool efficiency (`innodb_buffer_pool_size`).<br>• **Zero IDOR & Scraping Risks:** Route UUIDs eliminate sequential guessing attacks (e.g. `/vouchers/101`, `/vouchers/102`).<br>• **SQL Injection Elimination:** Restricting raw queries to parameter-bound backend classes eliminates user-input injection vulnerabilities.<br>• **High-Throughput Analytics:** Permitting raw aggregations inside Actions/Services prevents PHP memory limit exhaustion on high-volume reporting. |
+| **Risks Mitigated** | • Prevents competitor or malicious actor reconnaissance on total municipal transaction volumes and onboarding velocities.<br>• Mitigates severe storage bloat and slow join performance across high-volume transaction lines (`journal_entry_lines`, `pos_transaction_lines`).<br>• Blocks unauthorized cross-department data leakage caused by un-scoped raw `DB::select` queries. |
+| **Caveats & Trade-offs** | • **Dual Identifier Maintenance:** Models exposed to routes must use the `HasRouteUuid` trait and maintain an indexed `uuid` column alongside `id`.<br>• **Relational Consistency:** Developers and AI assistants must strictly reference integer `id` for internal foreign keys (`foreignId()`), never foreign UUIDs.<br>• **Manual Scoping on Query Builder:** Developers bypassing Eloquent with `DB::table()` must explicitly append `where('office_id', ...)` since `OfficeScope` only attaches to Eloquent. |
 
 ---
 
@@ -1668,10 +1781,12 @@ Prior to final acceptance, certificate of completion issuance, and procurement p
    - 100% green test execution via Pest PHP (`./vendor/bin/pest`).
    - Zero violations on Laravel Pint (`./vendor/bin/pint --test`).
    - Zero errors on Larastan Level 5 (`./vendor/bin/phpstan analyse`).
+   - Zero FAIL findings on the LGU Compliance Auditor (`php artisan lgu:audit --strict`), enforcing architectural tiers, event safety, and RAW query restrictions.
    - Reversible database migrations (`php artisan migrate:fresh --seed`) with deterministic, realistic seed fixtures.
 
 2. **Gate 2: Security & Statutory Compliance Sign-off**
    - Verification of the Dual-Identifier Standard (`BIGINT id` PK + `uuid` route key).
+   - Strict adherence to the Balanced Query Architecture (zero RAW SQL in Livewire/Blade; 100% PDO parameter binding on critical backend queries).
    - DPA RA 10173 SPI field encryption and blind index testing.
    - COA cryptographic audit hash chain verification and database trigger locks.
    - ARTA RA 11032 SLA engine adherence and holiday calculation verification.

@@ -29,6 +29,7 @@
 | **Automated Test Suite** | `php artisan test` or `./vendor/bin/pest` | **100% pass rate** on all unit and feature tests. Critical paths (auth, financial calculation, SLA computation, PII access) must have dedicated test coverage. | [ ] PASS<br>[ ] FAIL |
 | **Code Style Compliance** | `./vendor/bin/pint --test` | **Zero violations** against LGU `pint.json` preset. | [ ] PASS<br>[ ] FAIL |
 | **Static Code Analysis** | `./vendor/bin/phpstan analyse` | **Zero errors** at Larastan / PHPStan **Level 5** minimum. | [ ] PASS<br>[ ] FAIL |
+| **LGU Compliance Auditor** | `php artisan lgu:audit --strict` | **Zero FAIL findings** across statutory, architectural, and database injection checks. | [ ] PASS<br>[ ] FAIL |
 | **Migration Reversibility** | `php artisan migrate:fresh --seed` | Clean execution without errors; deterministic seed data populates essential roles, permissions, and test accounts. | [ ] PASS<br>[ ] FAIL |
 | **Asset Compilation** | `npm run build` | Clean production build with Vite; zero console or chunk-resolution errors. | [ ] PASS<br>[ ] FAIL |
 
@@ -39,7 +40,7 @@
 | Checkpoint | Standard Reference | Verification Details | Status |
 | :--- | :--- | :--- | :---: |
 | **Internal Primary Keys** | `BIGINT UNSIGNED id` | Every relational table uses auto-incrementing integer PK. No UUID primary keys on transactional/ledger tables. | [ ] PASS<br>[ ] FAIL |
-| **Public Route Identifiers** | `HasRouteUuid` Trait | All public URLs and route-model bindings use immutable UUID v4 (`uuid` column). No sequential integer IDs exposed in routes. | [ ] PASS<br>[ ] FAIL |
+| **Public Route Identifiers** | `HasRouteUuid` Trait | All public URLs and route-model bindings use immutable UUID v4 (`uuid` column). No sequential integer IDs exposed in routes. Pivot tables, lookup dictionaries, and dependent sub-lines are exempt. | [ ] PASS<br>[ ] FAIL |
 | **Dedicated Show Routes** | `/{resource}/{uuid}` | Comprehensive record inspections (vouchers, records, permits) have dedicated URL routes. Zero monolithic modals for record review. | [ ] PASS<br>[ ] FAIL |
 | **Livewire Modal Bounds** | Rule of 3 Fields | Modals strictly restricted to confirmations, state toggles, or $\le 3$ fields. Complex workflows graduate to dedicated routes. | [ ] PASS<br>[ ] FAIL |
 | **Print & Binary Exports** | Controller Separation | Official printable layouts (`window.print()`) and binary exports (PDF/Excel) routed through dedicated Controllers, not Livewire actions. | [ ] PASS<br>[ ] FAIL |
@@ -50,6 +51,7 @@
 | **CLI Settings Prompts** | `laravel/prompts` | Interactive Artisan commands provided for administrative setup without direct production `.env` editing. | [ ] PASS<br>[ ] FAIL |
 | **Foreign Key Integrity** | `onDelete('restrict')` | Relational tables tied to financial, voucher, personnel, or audit histories strictly prohibit unmonitored cascade deletion. | [ ] PASS<br>[ ] FAIL |
 | **Department / Office Scoping** | Fail-Closed `OfficeScope` | Multi-office transactional models fail closed (`1 = 0`) if active office session context is missing. | [ ] PASS<br>[ ] FAIL |
+| **Balanced Query Architecture & RAW SQL Policy** | Section 7.5 Standard | Eloquent ORM is default standard. RAW SQL queries strictly forbidden in Livewire components and Blade views. Permitted in Actions/Services only for critical need (aggregations, window functions, locks) with 100% PDO parameter bindings and explicit `office_id` tenant scoping. | [ ] PASS<br>[ ] FAIL |
 | **Naming Conventions Matrix** | Section 14 Matrix | Files, namespaces, and classes strictly adhere to the Universal Naming Conventions Matrix (singular models/controllers, typed actions, domain grouping when >5 files, zero junk classes). | [ ] PASS<br>[ ] FAIL |
 | **Eloquent Policy Coverage** | Section 15.2 Mandate | Every citizen, financial, regulatory, and transactional Eloquent model has a dedicated registered Policy class implementing required domain abilities. | [ ] PASS<br>[ ] FAIL |
 | **Policy-Mediated RBAC** | Section 15.4 Standard | Zero hardcoded `$user->hasRole()` or `@role()` checks in Blade, Livewire, or Controllers. All checks query atomic permissions via `$user->can()` / `@can()`. | [ ] PASS<br>[ ] FAIL |

@@ -8,4 +8,5 @@
 5. **Business Logic:** Encapsulate state mutations into invokable Action classes with `DB::transaction()` and pessimistic locking.
 6. **Events:** Always set `public bool $afterCommit = true` on transactional events. Listeners must implement `ShouldQueue`.
 7. **Authorization:** Never use `$user->hasRole()` or `@role()` in controllers or views. Use native Policies and check atomic permissions with `$user->can()` / `@can()`.
-8. **Compliance Checks:** Always test code using `php artisan lgu:audit` and ensure `./vendor/bin/pint --test` passes.
+8. **Balanced Query Architecture:** Default to Eloquent ORM. Never place raw SQL in Livewire components or Blade views. Restrict RAW SQL (`DB::raw`, `whereRaw`, etc.) to Actions/Services for critical need (aggregations, window functions) with 100% PDO parameter bindings and explicit `office_id` scoping.
+9. **Compliance Checks:** Always test code using `php artisan lgu:audit` and ensure `./vendor/bin/pint --test` passes.

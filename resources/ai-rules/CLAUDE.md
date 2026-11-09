@@ -27,7 +27,12 @@ This codebase complies with **LGU-ICTO-STD-2026-V1** for Philippine municipal go
    - Route all authorization through Eloquent Policies using `@can(...)` or `$this->authorize(...)`.
    - Ensure policies check active office scope (`active_office_id`), monetary limits, and Segregation of Duties.
 
-6. **Quality & Audit Checks:**
+6. **Balanced Query Architecture & RAW SQL Limitations:**
+   - Default to Eloquent ORM. Never place raw SQL in Livewire components or Blade views.
+   - Restrict RAW SQL (`DB::raw`, `whereRaw`, etc.) to Actions/Services for critical need (aggregations, window functions, locks).
+   - Mandatory PDO parameter binding (never interpolate variables with `$`). Always preserve `office_id` scoping.
+
+7. **Quality & Audit Checks:**
    - Format with `./vendor/bin/pint --test`
    - Analyse with `./vendor/bin/phpstan analyse`
    - Run statutory compliance check: `php artisan lgu:audit`

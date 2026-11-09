@@ -39,6 +39,7 @@ class LguAuditCommand extends Command
         $this->auditHardcodedRoleAntiPattern();
         $this->auditEventAfterCommitSafety();
         $this->auditPrintableControllerSeparation();
+        $this->auditRawDatabaseQueries();
 
         if ($format === 'json') {
             $this->outputJson();
@@ -259,6 +260,90 @@ class LguAuditCommand extends Command
             $this->addResult('MVC & Livewire', 'Print & Binary Export Separation', 'PASS', 'Official printable forms and PDF streams isolated in dedicated Controllers.');
         } else {
             $this->addResult('MVC & Livewire', 'Print & Binary Export Separation', 'WARN', 'Binary streams detected inside Livewire components: ' . implode(', ', $flagged) . '. Move to dedicated single-action Controller.');
+        }
+    }
+
+    /**
+     * Check Section 7.5: Balanced Query Architecture & Raw SQL limitations.
+     *
+     * Rule:
+     * - FAIL: RAW queries in presentation layers (Livewire, Blade views, Controllers).
+     * - FAIL: Direct variable interpolation or string concatenation in raw queries (SQL injection vulnerability).
+     * - WARN: Parameterized raw queries in backend domain layers (Actions, Services, Models) requiring critical-need justification.
+     * - PASS: Balanced query architecture satisfied.
+     */
+    protected function auditRawDatabaseQueries(): void
+    {
+        $rawPattern = '/\b(?:DB::(?:raw|select|statement|unprepared)|->(?:whereRaw|selectRaw|havingRaw|orderByRaw|groupByRaw))\s*\(/i';
+
+        // 1. Check UI & presentation paths where RAW is strictly prohibited (FAIL)
+        $uiPaths = array_filter([
+            app_path('Livewire'),
+            resource_path('views'),
+            app_path('Http/Controllers'),
+        ], fn ($p) => File::isDirectory($p));
+
+        $uiViolations = [];
+        foreach ($uiPaths as $path) {
+            $files = File::allFiles($path);
+            foreach ($files as $file) {
+                $content = File::get($file->getRealPath());
+                if (preg_match($rawPattern, $content)) {
+                    $relativePath = str_replace(base_path() . DIRECTORY_SEPARATOR, '', $file->getRealPath());
+                    $uiViolations[] = $relativePath;
+                }
+            }
+        }
+
+        // 2. Check for unsafe variable interpolation or concatenation (FAIL) across all scan paths
+        $allScanPaths = array_filter([
+            app_path(),
+            resource_path('views'),
+        ], fn ($p) => File::isDirectory($p));
+
+        $unsafeInterpolations = [];
+        // Pattern: raw call followed by dynamic variable or double-quoted string with variable, or string concatenation
+        $unsafePattern = '/\b(?:DB::(?:raw|select|statement|unprepared)|->(?:whereRaw|selectRaw|havingRaw|orderByRaw|groupByRaw))\s*\(\s*(?:\$[a-zA-Z_\x7f-\xff]|"[^"]*\$[a-zA-Z_\x7f-\xff]|(?:\'[^\']*\'|"[^"]*")\s*\.\s*\$[a-zA-Z_\x7f-\xff])/i';
+
+        foreach ($allScanPaths as $path) {
+            $files = File::allFiles($path);
+            foreach ($files as $file) {
+                $content = File::get($file->getRealPath());
+                if (preg_match($unsafePattern, $content)) {
+                    $relativePath = str_replace(base_path() . DIRECTORY_SEPARATOR, '', $file->getRealPath());
+                    $unsafeInterpolations[] = $relativePath;
+                }
+            }
+        }
+
+        // 3. Check for raw queries in domain backend layers (app/Actions, app/Services, app/Models) (WARN)
+        $backendPaths = array_filter([
+            app_path('Actions'),
+            app_path('Services'),
+            app_path('Models'),
+        ], fn ($p) => File::isDirectory($p));
+
+        $backendRaw = [];
+        foreach ($backendPaths as $path) {
+            $files = File::allFiles($path);
+            foreach ($files as $file) {
+                $content = File::get($file->getRealPath());
+                if (preg_match($rawPattern, $content)) {
+                    $relativePath = str_replace(base_path() . DIRECTORY_SEPARATOR, '', $file->getRealPath());
+                    $backendRaw[] = $relativePath;
+                }
+            }
+        }
+
+        // Aggregate findings
+        if (! empty($unsafeInterpolations)) {
+            $this->addResult('Database & Queries', 'RAW Query Limitation & Injection Guard', 'FAIL', 'Unsafe RAW query with variable interpolation/concatenation detected in: ' . implode(', ', array_unique($unsafeInterpolations)) . '. Use PDO parameter bindings (? or named bindings).');
+        } elseif (! empty($uiViolations)) {
+            $this->addResult('Database & Queries', 'RAW Query Limitation & Injection Guard', 'FAIL', 'RAW database query forbidden in presentation layers: ' . implode(', ', array_unique($uiViolations)) . '. Move to dedicated Action or Service class.');
+        } elseif (! empty($backendRaw)) {
+            $this->addResult('Database & Queries', 'RAW Query Limitation & Injection Guard', 'WARN', 'RAW query in backend domain layer: ' . implode(', ', array_unique($backendRaw)) . '. Ensure critical-need justification (aggregations/window functions) and preserve office_id scoping.');
+        } else {
+            $this->addResult('Database & Queries', 'RAW Query Limitation & Injection Guard', 'PASS', 'Balanced query architecture satisfied: no prohibited or unescaped raw queries detected.');
         }
     }
 
