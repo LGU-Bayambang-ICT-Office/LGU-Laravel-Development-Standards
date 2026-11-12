@@ -13,8 +13,10 @@ Official software development protocols, architecture traits, AI compliance audi
 `lgu-bayambang-ict-office/lgu-laravel-development-standards` is a turnkey Laravel Composer package that equips internal municipal engineering teams, contractual developers, and third-party software vendors with:
 * **Statutory Compliance Engines:** Built-in support for DPA RA 10173 (at-rest AES-256 field encryption & blind indexing), ARTA RA 11032 (3-7-20 working days SLA engine with holiday skipping), and COA Circulars (cryptographic SHA-256 hash chaining).
 * **Enterprise Architecture Traits & Middleware:** Dual-Identifier Standard (`BIGINT id` PK + UUID route binding), fail-closed multi-office scoping (`OfficeScope`), and municipal workstation hardening.
-* **AI Coding Agent Rules & Prompts:** Drop-in compliance guides for Google Antigravity, Cursor, Claude Code, and GitHub Copilot.
-* **Automated Compliance Auditor CLI:** `php artisan lgu:audit` to programmatically detect non-compliant patterns in CI/CD or local development.
+* **AI Coding Agent Directives & Rules:** Drop-in compliance instructions for Google Antigravity, Cursor, Claude Code, and GitHub Copilot (`AGENTS.md`, `.cursorrules`, `CLAUDE.md`, `.gemini/rules/lgu.md`).
+* **Automated Compliance Auditor CLI:** `php artisan lgu:audit` to programmatically detect non-compliant patterns in CI/CD or local development with decoupled OWASP Top 10:2025 security invariants and exportable Markdown/JSON audit reports.
+* **National Privacy Commission (NPC) Synchronizer CLI:** `php artisan lgu:npc-sync` to fetch active National Privacy Commission circulars from `privacy.gov.ph` and systematically assess project-specific DPA applicability.
+* **Production Hosting Blueprints:** Hardening and deployment blueprints for CloudPanel (Nginx, PHP 8.x, Redis) and Cloudflare Free Tier (WAF, SSL/TLS Full/Strict, Rate Limiting, HTTP/3).
 
 ---
 
@@ -56,34 +58,78 @@ This package transforms your municipal engineering standards into an active **AI
 Developers working in Antigravity, Cursor, or Claude Code can simply prompt:
 > *"Audit my newly implemented module against `docs/LARAVEL_LGU_DEVELOPMENT_STANDARDS.md` and complete `docs/VENDOR_DELIVERY_CHECKLIST.md`."*
 
-Because the package publishes local AI instruction files (`.cursorrules`, `CLAUDE.md`, `.gemini/rules/lgu.md`), AI agents automatically enforce:
+Because the package publishes local AI instruction files (`AGENTS.md`, `.cursorrules`, `CLAUDE.md`, `.gemini/rules/lgu.md`), AI agents automatically enforce:
 1. **Dedicated Show Routes:** No monolithic Livewire modals for viewing records.
 2. **Dual-Identifier Standard:** Models must implement `HasRouteUuid`.
 3. **Data Privacy (RA 10173):** Sensitive personal information must use `EncryptedPii` and blind indexing.
 4. **Policy-Mediated RBAC:** Zero hardcoded `$user->hasRole(...)` or `@role(...)`; checks must route through native Policies and `$user->can()`.
 5. **Event Safety:** Transactional events must declare `public bool $afterCommit = true`.
 
-### Programmatic Auditor CLI:
-Run the built-in auditor to scan your models, controllers, views, and policies:
+### Programmatic Auditor CLI (`php artisan lgu:audit`):
+Run the built-in auditor to scan your models, controllers, views, policies, and environment configurations against Philippine statutory standards and decoupled OWASP Top 10 security invariants:
 
 ```bash
-# Standard CLI table output
+# Standard CLI table output with immediate scope reminder banner
 php artisan lgu:audit
 
-# JSON output for CI/CD pipelines or AI agent parsing
-php artisan lgu:audit --format=json
+# Inline statutory remediation directives for non-compliant findings
+php artisan lgu:audit --fix-hint
 
-# Markdown output for GitHub Pull Request summaries
-php artisan lgu:audit --format=markdown
+# Generate and save comprehensive audit report (Markdown or JSON)
+php artisan lgu:audit --output # Saves to storage/app/lgu/audit-report.md
+php artisan lgu:audit --format=json --output # Saves to storage/app/lgu/audit-report.json
+php artisan lgu:audit --output=reports/acceptance-audit.md # Custom destination path
 
-# Strict mode: Treat warnings as errors
-php artisan lgu:audit --strict
+# Project onto OWASP Top 10:2021 framework version (defaults to 2025)
+php artisan lgu:audit --owasp-version=2021
+
+# Strict mode: Treat warnings as failures (recommended for CI/CD gates)
+php artisan lgu:audit --strict --output
 ```
+
+> [!IMPORTANT]
+> **Audit Scope & Limitations Disclaimer:**  
+> The `lgu:audit` command evaluates **technical architecture conventions, statutory engineering controls (DPA RA 10173, ARTA RA 11032, COA ledgers), and OWASP security baseline invariants**. It **does NOT** audit application business domain correctness, user acceptance criteria (UAT), or functional requirements specified in project Terms of Reference (TOR). Functional completeness and business workflow logic must be verified independently through automated test suites (`php artisan test`) and stakeholder User Acceptance Testing (UAT).
+
+#### Audit Report Breakdown (`--output`):
+When `--output` is passed, the generated report includes:
+1. **Philippine Statutory & Governance Checklist:** Explicit status for DPA field encryption, ARTA SLA compliance, COA hash chaining, and workstation session security.
+2. **Decoupled OWASP Top 10 Assessment:** Category-by-category security breakdown with dual-track remediation:
+   - **Code Remediation:** Specific Laravel-native fixes (Form Requests, Policies, Strict Eloquent, Encrypted Casts).
+   - **Hosting Infrastructure Action:** Concrete configuration rules for CloudPanel and Cloudflare.
+3. **Statutory vs. OWASP Reconciliations:** Resolution matrices for compliance tensions (e.g., COA immutable ledgers vs. DPA Right to Erasure / GDPR-style deletion).
+4. **CloudPanel & Cloudflare Free Tier Blueprints:** Ready-to-apply Nginx fastcgi/headers snippets, Cloudflare WAF expression rules, and Redis security directives.
+5. **NPC Issuance Inventory:** Active circulars and advisories evaluated for the application.
+
+---
+
+## 🇵🇭 National Privacy Commission (NPC) Synchronizer CLI (`php artisan lgu:npc-sync`)
+
+The `lgu:npc-sync` command enables engineering teams to synchronize official NPC circulars and advisories directly from `privacy.gov.ph` and systematically assess their applicability to the system:
+
+```bash
+# Interactive synchronization and applicability assessment
+php artisan lgu:npc-sync
+
+# Refresh local catalog cache without interactive prompts (CI/CD safe)
+php artisan lgu:npc-sync --fetch-only
+
+# Re-evaluate all issuances (including previously reviewed items)
+php artisan lgu:npc-sync --re-review
+
+# Fetch from a custom URL
+php artisan lgu:npc-sync --url=https://privacy.gov.ph/advisories-circulars/
+```
+
+* **Live Scraping & Offline Fallback:** Synchronizes canonical circulars and advisories from `https://privacy.gov.ph/advisories-circulars/`. If the NPC portal is unreachable, it automatically falls back to the package's bundled verified seed catalog (`resources/data/npc-catalog-seed.json`).
+* **Interactive Assessment:** Prompts developers for each active issuance (e.g., Data Breach Management, Cloud Computing Guidelines, Security of Personal Data) and records applicability and developer rationale in `storage/app/lgu/npc-assessment.json`.
+* **Integrated Audit Reporting:** Results are automatically ingested into `php artisan lgu:audit` and included in generated audit reports.
 
 ---
 
 ## 📁 Key Governance Documents
 
+* **[AGENTS.md](AGENTS.md)**: Universal AI Coding Agent guidelines and operational protocols for Antigravity, Cursor, Claude Code, and Copilot.
 * **[LARAVEL_LGU_DEVELOPMENT_STANDARDS.md](LARAVEL_LGU_DEVELOPMENT_STANDARDS.md)**: Master handbook (17 sections) covering MVC vs. Livewire, Actions/Services, `.env` vs. DB settings, Universal Naming Conventions Matrix, Gates & Policies, and disaster recovery.
 * **[VENDOR_DELIVERY_CHECKLIST.md](VENDOR_DELIVERY_CHECKLIST.md)**: Procurement and handover acceptance checklist.
 * **[pint.json](pint.json)**: Mandated Laravel Pint code style rules.
@@ -101,6 +147,8 @@ use Lgu\GovSuite\Traits\HasPiiHashing;
 use Lgu\GovSuite\Traits\BelongsToOffice;
 use Lgu\GovSuite\Casts\EncryptedPii;
 use Lgu\GovSuite\Services\WorkingDaysService;
+use Lgu\GovSuite\Services\NpcCatalogService;
+use Lgu\GovSuite\Security\SecurityStandardsMapper;
 use Lgu\GovSuite\Policies\BaseGovernmentPolicy;
 use Lgu\GovSuite\Middleware\PreventBackHistoryCache;
 use Lgu\GovSuite\Middleware\EnforceSessionTimeout;
