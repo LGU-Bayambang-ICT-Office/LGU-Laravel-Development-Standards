@@ -42,7 +42,7 @@ class LguAuditCommandTest extends TestCase
         $this->artisan('lgu:audit', ['--format' => 'markdown'])
             ->expectsOutputToContain('# LGU Engineering Compliance Audit Report')
             ->expectsOutputToContain('Audit Scope & Limitation Disclaimer')
-            ->expectsOutputToContain('does NOT audit application business domain correctness')
+            ->expectsOutputToContain('**does NOT** audit application business domain correctness')
             ->expectsOutputToContain('## 1. Philippine Statutory & Governance Standards')
             ->expectsOutputToContain('## 2. OWASP Top 10:2025 Security Assessment (Version: 2025 (Active Version))')
             ->expectsOutputToContain('## 3. Statutory vs. OWASP Top 10 Reconciliation Recommendations')
@@ -107,6 +107,35 @@ class LguAuditCommandTest extends TestCase
         $this->assertStringContainsString('OWASP Top 10:2025', $content);
 
         File::delete($defaultPath);
+    }
+
+    public function test_audit_command_saves_report_to_custom_path(): void
+    {
+        $customPath = storage_path('app/lgu/custom-audit.md');
+        if (File::exists($customPath)) {
+            File::delete($customPath);
+        }
+
+        $this->artisan('lgu:audit', ['--output' => $customPath])
+            ->expectsOutputToContain("Audit report successfully saved to: {$customPath}")
+            ->assertSuccessful();
+
+        $this->assertTrue(File::exists($customPath));
+        File::delete($customPath);
+    }
+
+    public function test_audit_command_does_not_save_report_when_output_option_omitted(): void
+    {
+        $defaultPath = storage_path('app/lgu/audit-report.md');
+        if (File::exists($defaultPath)) {
+            File::delete($defaultPath);
+        }
+
+        $this->artisan('lgu:audit')
+            ->doesntExpectOutputToContain('Audit report successfully saved to:')
+            ->assertSuccessful();
+
+        $this->assertFalse(File::exists($defaultPath));
     }
 
     public function test_audit_command_displays_fix_hints(): void

@@ -21,7 +21,7 @@ class LguAuditCommand extends Command
 {
     protected $signature = 'lgu:audit 
                             {--format=cli : Output format (cli, json, markdown)}
-                            {--output=? : Save report to a file (defaults to storage/app/lgu/audit-report.md or .json)}
+                            {--o|output= : Save report to a file (defaults to storage/app/lgu/audit-report.md or .json)}
                             {--strict : Treat warnings as failures}
                             {--fix-hint : Display statutory remediation steps for each finding}
                             {--owasp-version=2025 : OWASP Top 10 framework version to project (e.g. 2025, 2021)}';
@@ -81,9 +81,8 @@ class LguAuditCommand extends Command
             $this->outputCliTable();
         }
 
-        $outputOption = $this->option('output');
-        if ($outputOption !== null) {
-            $this->saveReportToFile($outputOption, $format);
+        if ($this->shouldSaveReport()) {
+            $this->saveReportToFile($format);
         }
 
         $strict = (bool) $this->option('strict');
@@ -192,7 +191,7 @@ class LguAuditCommand extends Command
      */
     protected function auditNpcIssuancesAssessment(): void
     {
-        $npcService = new NpcCatalogService();
+        $npcService = new NpcCatalogService;
         $assessment = $npcService->loadAssessment();
 
         if ($assessment === null || empty($assessment['issuances'])) {
@@ -200,7 +199,7 @@ class LguAuditCommand extends Command
                 'Data Privacy (DPA)',
                 'NPC Statutory Issuances Assessment',
                 'WARN',
-                'NPC assessment not configured. Run `php artisan lgu:npc-sync` to fetch and review applicable National Privacy Commission circulars.'
+                'NPC assessment not configured. Run `php artisan lgu:npc-sync` to fetch and review applicable National Privacy Commission circulars.',
             );
 
             return;
@@ -222,14 +221,14 @@ class LguAuditCommand extends Command
                 'Data Privacy (DPA)',
                 'NPC Statutory Issuances Assessment',
                 'WARN',
-                count($unreviewed) . ' NPC issuance(s) pending review. Run `php artisan lgu:npc-sync` to complete applicability inventory.'
+                count($unreviewed) . ' NPC issuance(s) pending review. Run `php artisan lgu:npc-sync` to complete applicability inventory.',
             );
         } else {
             $this->addResult(
                 'Data Privacy (DPA)',
                 'NPC Statutory Issuances Assessment',
                 'PASS',
-                'NPC applicability assessment completed (' . count($applicable) . ' applicable circulars identified for DPO oversight).'
+                'NPC applicability assessment completed (' . count($applicable) . ' applicable circulars identified for DPO oversight).',
             );
         }
     }
@@ -458,7 +457,7 @@ class LguAuditCommand extends Command
                 codeRecommendation: $inv['code_recommendation'],
                 infraRecommendation: $inv['infra_recommendation'],
                 ruleId: $ruleId,
-                frameworkVersion: $framework['version']
+                frameworkVersion: $framework['version'],
             );
         }
     }
@@ -570,7 +569,8 @@ class LguAuditCommand extends Command
      */
     protected function checkInvariantCryptographicIsolation(): array
     {
-        $hasIsolatedKey = ! empty(config('lgu.dpa.encryption_key')) || ! empty(env('PII_ENCRYPTION_KEY'));
+        $envContent = File::exists(base_path('.env')) ? (string) File::get(base_path('.env')) : '';
+        $hasIsolatedKey = ! empty(config('lgu.dpa.encryption_key')) || str_contains($envContent, 'PII_ENCRYPTION_KEY=');
 
         if ($hasIsolatedKey) {
             return [
@@ -793,7 +793,7 @@ class LguAuditCommand extends Command
         ?string $codeRecommendation = null,
         ?string $infraRecommendation = null,
         ?string $ruleId = null,
-        ?string $frameworkVersion = null
+        ?string $frameworkVersion = null,
     ): void {
         if ($status === 'PASS') {
             $this->passCount++;
@@ -1013,7 +1013,9 @@ class LguAuditCommand extends Command
 
     protected function outputJson(): void
     {
-        $this->line($this->renderJson());
+        foreach (explode("\n", $this->renderJson()) as $line) {
+            $this->line($line);
+        }
     }
 
     public function renderMarkdown(): string
@@ -1023,10 +1025,10 @@ class LguAuditCommand extends Command
 
         $lines = [];
         $lines[] = "# LGU Engineering Compliance Audit Report\n";
-        $lines[] = "**Standard:** `LGU-ICTO-STD-2026-V1`  ";
+        $lines[] = '**Standard:** `LGU-ICTO-STD-2026-V1`  ';
         $lines[] = "**Security Framework:** `{$frameworkTag}` (Version: `{$frameworkVersion}`)  ";
         $lines[] = '**Audit Result:** ' . ($this->failCount === 0 ? '✅ COMPLIANT' : '❌ NON-COMPLIANT') . "\n";
-        $lines[] = "> [!IMPORTANT] **Audit Scope & Limitation Disclaimer**  ";
+        $lines[] = '> [!IMPORTANT] **Audit Scope & Limitation Disclaimer**  ';
         $lines[] = '> This automated compliance auditor evaluates **technical architecture conventions, statutory engineering controls (DPA RA 10173, ARTA RA 11032, COA ledgers), and OWASP security baseline invariants**.  ';
         $lines[] = '> It **does NOT** audit application business domain correctness, user acceptance criteria (UAT), or functional requirements specified in project Terms of Reference (TOR). Functional completeness and business workflow logic must be verified independently through automated test suites (`php artisan test`) and stakeholder User Acceptance Testing (UAT).' . "\n";
 
@@ -1089,23 +1091,63 @@ class LguAuditCommand extends Command
 
     protected function outputMarkdown(): void
     {
-        $this->line($this->renderMarkdown());
+        foreach (explode("\n", $this->renderMarkdown()) as $line) {
+            $this->line($line);
+        }
     }
 
-    protected function saveReportToFile($outputOption, string $format): void
+    /**
+     * Determine if an audit report should be written to disk.
+     */
+    protected function shouldSaveReport(): bool
+    {
+        if (! $this->hasOption('output')) {
+            return false;
+        }
+
+        $optionValue = $this->option('output');
+
+        if ($optionValue !== null && $optionValue !== false && $optionValue !== '' && $optionValue !== '?') {
+            return true;
+        }
+
+        if ($this->input !== null && $this->input->hasParameterOption(['--output', '-o'])) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Resolve destination path for the audit report.
+     */
+    protected function getReportDestination(string $format): string
     {
         $extension = ($format === 'json') ? 'json' : 'md';
+        $optionValue = $this->option('output');
 
-        if (is_string($outputOption) && trim($outputOption) !== '' && $outputOption !== '1') {
-            $destination = $outputOption;
+        if (is_string($optionValue) && trim($optionValue) !== '' && $optionValue !== '1' && $optionValue !== '?') {
+            $destination = trim($optionValue);
+
             if (is_dir($destination) || str_ends_with($destination, '/') || str_ends_with($destination, '\\')) {
                 $destination = rtrim($destination, '/\\') . DIRECTORY_SEPARATOR . "audit-report.{$extension}";
             }
-        } else {
-            $destination = storage_path("app/lgu/audit-report.{$extension}");
+
+            if (! (str_starts_with($destination, '/') || str_starts_with($destination, '\\') || preg_match('/^[a-zA-Z]:[\\\\\/]/', $destination))) {
+                $destination = base_path($destination);
+            }
+
+            return $destination;
         }
 
-        $content = ($extension === 'json') ? $this->renderJson() : $this->renderMarkdown();
+        return storage_path("app/lgu/audit-report.{$extension}");
+    }
+
+    protected function saveReportToFile(string $format): void
+    {
+        $destination = $this->getReportDestination($format);
+        $isJson = str_ends_with(strtolower($destination), '.json') || $format === 'json';
+        $content = $isJson ? $this->renderJson() : $this->renderMarkdown();
 
         $directory = dirname($destination);
         if (! File::isDirectory($directory)) {
@@ -1113,7 +1155,10 @@ class LguAuditCommand extends Command
         }
 
         File::put($destination, $content);
-        $this->newLine();
-        $this->info("📄 Audit report successfully saved to: {$destination}");
+
+        if ($format === 'cli' || $format === '') {
+            $this->newLine();
+            $this->info("📄 Audit report successfully saved to: {$destination}");
+        }
     }
 }
