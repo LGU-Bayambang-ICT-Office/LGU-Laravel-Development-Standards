@@ -68,11 +68,16 @@ For every `FAIL` or `WARN` item:
 2. Review the context around the violation (e.g. why is a raw SQL query being used? Is the Livewire component managing a 10-field form inside a modal?).
 3. Verify if statutory mitigating controls exist.
 
-### Step 3: Statutory Risk & Vendor Gate Evaluation
+### Step 3: Statutory Risk & Dual-Track Mitigation Evaluation
 Evaluate against the delivery acceptance criteria in `VENDOR_DELIVERY_CHECKLIST.md`:
 - **PASS:** 0 Failures, 0 Warnings in strict mode.
 - **CONDITIONAL:** 0 Failures, but non-blocking warnings present (e.g., minor missing documentation).
 - **FAIL:** Any statutory invariant failure (exposed integer IDs in routes, unencrypted SPI, missing maker-checker, destructive SQL on financial tables).
+
+**Enforce Dual-Track Remediation:**
+For every security invariant finding, distinguish between:
+1. **Application Code Action:** What must be refactored in PHP / Laravel (e.g., Eloquent attributes, Form Requests, Policies).
+2. **Infrastructure / Edge Action (Cloudflare & CloudPanel):** Actions that are better implemented or required as defense-in-depth at the web server (CloudPanel Nginx / PHP-FPM) or edge WAF (Cloudflare Free Tier), such as edge rate limiting, bot protection, TLS 1.3/HSTS, and HTTP response headers.
 
 ### Step 4: Generate the Markdown Audit Report
 Write the audit report to `storage/app/lgu/audit-report-YYYY-MM-DD.md` (and present as a conversation artifact if requested).
@@ -117,20 +122,20 @@ The generated report MUST adhere to this exact standard template:
 
 ---
 
-## 3. OWASP Top 10:2025 Security Invariants (Tier 2)
+## 3. OWASP Top 10:2025 Security Invariants & Dual-Track Remediation (Tier 2)
 
-| Rule ID | Category | Technical Check | Status | Severity |
-| :--- | :--- | :--- | :--- | :--- |
-| `SEC-MASS-ASSIGNMENT` | A01:2025 | Model Fillable / Guarded Protection | PASS / FAIL | HIGH |
-| `SEC-ENV-DEBUG-CSP` | A02:2025 | Production Debug & CSP Nonce | PASS / FAIL | CRITICAL |
-| `SEC-SUPPLY-CHAIN` | A03:2025 | Composer Lock & Vulnerability Gate | PASS / FAIL | HIGH |
-| `SEC-CRYPTO-PII` | A04:2025 | Dedicated PII Key Isolation | PASS / FAIL | CRITICAL |
-| `SEC-BLADE-XSS` | A05:2025 | Blade Auto-Escaping Protection | PASS / FAIL | MEDIUM |
-| `SEC-SOD-POLICY` | A06:2025 | Segregation of Duties Enforcement | PASS / FAIL | HIGH |
-| `SEC-AUTH-THROTTLE` | A07:2025 | Rate Limiting & Session Timeouts | PASS / FAIL | HIGH |
-| `SEC-SERIALIZATION` | A08:2025 | PHP Unserialize Ban | PASS / FAIL | HIGH |
-| `SEC-AUDIT-LOGGING` | A09:2025 | Audit Activity Observer Active | PASS / FAIL | CRITICAL |
-| `SEC-FAIL-CLOSED-SCOPE`| A10:2025 | Fail-Closed OfficeScope Tenancy | PASS / FAIL | HIGH |
+| Rule ID | Category | Technical Check | Status | Primary Enforcement Track | Severity |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `SEC-MASS-ASSIGNMENT` | A01:2025 | Model Fillable / Guarded Protection | PASS / FAIL | Code (Model `$fillable`) | HIGH |
+| `SEC-ENV-DEBUG-CSP` | A02:2025 | Production Debug & CSP Nonce | PASS / FAIL | Dual (Laravel CSP + CloudPanel Nginx) | CRITICAL |
+| `SEC-SUPPLY-CHAIN` | A03:2025 | Composer Lock & Vulnerability Gate | PASS / FAIL | Code (composer audit) | HIGH |
+| `SEC-CRYPTO-PII` | A04:2025 | Dedicated PII Key & SSL/TLS | PASS / FAIL | Dual (Laravel Cast + Cloudflare Full Strict) | CRITICAL |
+| `SEC-BLADE-XSS` | A05:2025 | Blade Auto-Escaping Protection | PASS / FAIL | Code (Blade auto-escape) | MEDIUM |
+| `SEC-SOD-POLICY` | A06:2025 | Segregation of Duties Enforcement | PASS / FAIL | Code (BaseGovernmentPolicy) | HIGH |
+| `SEC-AUTH-THROTTLE` | A07:2025 | Rate Limiting & Session Timeouts | PASS / FAIL | Dual (Laravel Limiter + Cloudflare WAF) | HIGH |
+| `SEC-SERIALIZATION` | A08:2025 | PHP Unserialize Ban | PASS / FAIL | Code (JSON-only storage) | HIGH |
+| `SEC-AUDIT-LOGGING` | A09:2025 | Audit Activity Observer Active | PASS / FAIL | Dual (AuditObserver + DB SQL Trigger) | CRITICAL |
+| `SEC-FAIL-CLOSED-SCOPE`| A10:2025 | Fail-Closed OfficeScope Tenancy | PASS / FAIL | Code (OfficeScope query filter) | HIGH |
 
 ---
 
@@ -142,7 +147,7 @@ The generated report MUST adhere to this exact standard template:
 * **File Location:** [`app/Models/Example.php:42`](file:///app/Models/Example.php#L42)
 * **Finding Details:** {Explain root cause and violation}
 
-#### Proposed Remediation Patch:
+#### Proposed Code Remediation Patch:
 ```diff
 --- a/app/Models/Example.php
 +++ b/app/Models/Example.php
@@ -157,12 +162,44 @@ The generated report MUST adhere to this exact standard template:
 
 ---
 
-## 5. Prioritized Remediation Roadmap
+## 5. Infrastructure & Edge Hardening Blueprint (CloudPanel & Cloudflare Free Tier)
+
+*Identify and prescribe infrastructure-level controls that protect against OWASP Top 10 vulnerabilities at the web server and network edge:*
+
+### 5.1 CloudPanel Hosting Blueprint (Ubuntu 24.04 / Nginx / PHP 8.4)
+- **Nginx Security Headers (A02 / A05):** In CloudPanel Site Settings > Vhost, inject:
+  ```nginx
+  add_header X-Frame-Options "SAMEORIGIN" always;
+  add_header X-Content-Type-Options "nosniff" always;
+  add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+  ```
+- **PHP-FPM Hardening (A02 / A08):** Set `display_errors = Off`, `expose_php = Off`, and `allow_url_fopen = Off`. Verify the pool runs under an unprivileged, site-isolated user.
+- **Sensitive Metadata & Dotfile Blocking (A01 / A02):** Verify Nginx blocks direct HTTP access:
+  ```nginx
+  location ~ /\.(env|git|htaccess) { deny all; return 404; }
+  location ~ /(composer\.(json|lock)|package(-lock)?\.json) { deny all; return 404; }
+  ```
+- **Immutable Database Trigger Seal (A09 / COA):** Execute `database/sql/freeze_audit_logs_trigger.sql` directly on the database to prevent deletion or truncation even by DBA accounts.
+
+### 5.2 Cloudflare Free Tier Blueprint (Edge Security, CDN & WAF)
+- **SSL/TLS Strict Encryption (A02 / A04):** Set SSL/TLS mode to **"Full (Strict)"**. Enable **"Always Use HTTPS"** and **"Automatic HTTPS Rewrites"**. Set Minimum TLS Version to **TLS 1.2** or **TLS 1.3**.
+- **HSTS Enforcement (A02):** Enable HSTS with `max-age=31536000` (1 year), `includeSubDomains`, and `preload`.
+- **Bot Fight Mode & Browser Integrity (A07):** Turn ON **Bot Fight Mode** and **Browser Integrity Check** to block credential stuffing and automated fuzzers before reaching the origin server.
+- **WAF Edge Rate Limiting (A07 - SEC-AUTH-THROTTLE):** Create Free Tier Rate Limiting Rules:
+  - Match: URI Path equals `/login` or `/office/switch`
+  - Rate: $\ge 5$ requests per 10 seconds per IP $\to$ Action: Block for 1 minute.
+
+---
+
+## 6. Prioritized Remediation Roadmap
 
 1. **Immediate Blockers (Sprint 0 - Mandatory for Delivery Acceptance):**
    - Apply Diff #1 to resolve statutory non-compliance.
+   - Configure Cloudflare SSL Full (Strict) and CloudPanel Nginx dotfile blocking.
 2. **Security Invariants (Sprint 1):**
    - Address OWASP invariant warnings.
+   - Activate Cloudflare WAF Rate Limiting on authentication endpoints.
 3. **Architecture Polish (Sprint 2):**
    - Refactor Livewire modals exceeding the Rule of 3 into dedicated MVC Show routes.
 ```
