@@ -29,7 +29,8 @@
 | **Automated Test Suite** | `php artisan test` or `./vendor/bin/pest` | **100% pass rate** on all unit and feature tests. Critical paths (auth, financial calculation, SLA computation, PII access) must have dedicated test coverage. | [ ] PASS<br>[ ] FAIL |
 | **Code Style Compliance** | `./vendor/bin/pint --test` | **Zero violations** against LGU `pint.json` preset. | [ ] PASS<br>[ ] FAIL |
 | **Static Code Analysis** | `./vendor/bin/phpstan analyse` | **Zero errors** at Larastan / PHPStan **Level 5** minimum. | [ ] PASS<br>[ ] FAIL |
-| **LGU Compliance Auditor** | `php artisan lgu:audit --strict` | **Zero FAIL findings** across statutory, architectural, and database injection checks. | [ ] PASS<br>[ ] FAIL |
+| **Dependency Security Audit** | `composer audit && npm audit` | **Zero High or Critical** vulnerabilities across PHP and JavaScript packages. | [ ] PASS<br>[ ] FAIL |
+| **LGU Compliance Auditor** | `php artisan lgu:audit --strict` | **Zero FAIL findings** across statutory standards and OWASP Top 10:2025 security assessment. | [ ] PASS<br>[ ] FAIL |
 | **Migration Reversibility** | `php artisan migrate:fresh --seed` | Clean execution without errors; deterministic seed data populates essential roles, permissions, and test accounts. | [ ] PASS<br>[ ] FAIL |
 | **Asset Compilation** | `npm run build` | Clean production build with Vite; zero console or chunk-resolution errors. | [ ] PASS<br>[ ] FAIL |
 
@@ -51,6 +52,7 @@
 | **CLI Settings Prompts** | `laravel/prompts` | Interactive Artisan commands provided for administrative setup without direct production `.env` editing. | [ ] PASS<br>[ ] FAIL |
 | **Foreign Key Integrity** | `onDelete('restrict')` | Relational tables tied to financial, voucher, personnel, or audit histories strictly prohibit unmonitored cascade deletion. | [ ] PASS<br>[ ] FAIL |
 | **Department / Office Scoping** | Fail-Closed `OfficeScope` | Multi-office transactional models fail closed (`1 = 0`) if active office session context is missing. | [ ] PASS<br>[ ] FAIL |
+| **Mass Assignment Protection** | OWASP A01 Standard | Eloquent models declare explicit `$fillable` arrays. Zero occurrences of `protected $guarded = []`. | [ ] PASS<br>[ ] FAIL |
 | **Balanced Query Architecture & RAW SQL Policy** | Section 7.5 Standard | Eloquent ORM is default standard. RAW SQL queries strictly forbidden in Livewire components and Blade views. Permitted in Actions/Services only for critical need (aggregations, window functions, locks) with 100% PDO parameter bindings and explicit `office_id` tenant scoping. | [ ] PASS<br>[ ] FAIL |
 | **Naming Conventions Matrix** | Section 14 Matrix | Files, namespaces, and classes strictly adhere to the Universal Naming Conventions Matrix (singular models/controllers, typed actions, domain grouping when >5 files, zero junk classes). | [ ] PASS<br>[ ] FAIL |
 | **Eloquent Policy Coverage** | Section 15.2 Mandate | Every citizen, financial, regulatory, and transactional Eloquent model has a dedicated registered Policy class implementing required domain abilities. | [ ] PASS<br>[ ] FAIL |
@@ -66,6 +68,7 @@
 - [ ] **Blind Index Implementation:** Searchable encrypted fields implement companion `_blind_index` columns using HMAC-SHA256 with application salt to prevent unindexed table scanning.
 - [ ] **Right to Erasure Protocol:** Erasure requests execute an **anonymization / pseudonymization** pipeline for records linked to financial ledgers or administrative audits, preserving referential integrity while scrubbing personal identity.
 - [ ] **Data Retention Schedules:** Automatic cleanup or archiving jobs configured for temporary logs and transient applicant submissions per NPC guidelines.
+- [ ] **NPC Issuances Applicability Assessment:** Executed `php artisan lgu:npc-sync` to assess relevant National Privacy Commission circulars/advisories; inventory stored at `storage/app/lgu/npc-assessment.json` and verified in `php artisan lgu:audit`.
 
 ### 4.2 ARTA / Ease of Doing Business Act (RA 11032)
 - [ ] **Standard SLA Classification:** Citizen service workflows explicitly classify processing windows into Simple (≤3 days), Complex (≤7 days), or Highly Technical (≤20 days).
@@ -84,13 +87,32 @@
 
 ---
 
-## 5. Security & Workstation Hardening Verification
+## 5. Security Engineering, OWASP Top 10 & Infrastructure Verification
 
-- [ ] **Content Security Policy (CSP):** `spatie/laravel-csp` enabled with `LaravelViteNonceGenerator` injecting nonces into all script tags.
-- [ ] **Session Idle Timeout:** `EnforceSessionTimeout` middleware enforces maximum 15–30 minute inactivity auto-logout on municipal office workstations.
-- [ ] **Browser History Cache Prevention:** `PreventBackHistoryCache` middleware disables browser disk and memory caching on authenticated citizen/staff pages (`no-store, no-cache`).
+### 5.1 OWASP Top 10 Application Security Verification (Active Version: 2025)
+*Evaluated using decoupled security invariant rules (`SecurityStandardsMapper`) enforcing the **OWASP Top 10:2025 (Active Version)** baseline:*
+- [ ] **Mass Assignment Defense (A01):** All Eloquent models declare explicit `$fillable` arrays. Zero occurrences of `protected $guarded = []`.
+- [ ] **Content Security Policy (A02):** `spatie/laravel-csp` enabled with `LaravelViteNonceGenerator` injecting nonces into all script tags.
+- [ ] **Supply Chain Pinning (A03):** `composer.lock` and `package-lock.json` committed with 0 High/Critical CVEs (`composer audit`, `npm audit`).
+- [ ] **PII Isolated Keying (A04):** Dedicated `PII_ENCRYPTION_KEY` configured in `.env` distinct from `APP_KEY`.
+- [ ] **XSS Blade Escaping (A05):** Standard double-curly braces `{{ $var }}` used exclusively; zero unescaped `{!! $var !!}` rendering un-sanitized user input.
+- [ ] **Segregation of Duties (A06):** Domain policies enforce SoD (originator cannot approve) and monetary approval limits.
+- [ ] **Auth Rate Limiting & Session Timeout (A07):** `throttle` middleware active on login/auth routes; `EnforceSessionTimeout` middleware enforces 15-minute idle logout.
+- [ ] **Data Integrity & Deserialization (A08):** Continuous SHA-256 hash chaining active; zero usage of dangerous PHP `unserialize()`.
+- [ ] **Security Event Logging (A09):** All sensitive actions, failed authorizations, and office context switches logged to `audit_activities`.
+- [ ] **Fail-Closed Error Handling (A10):** Multi-tenant global scopes evaluate to `1 = 0` on absent context; production `APP_DEBUG=false`.
+- [ ] **Browser History Cache Prevention:** `PreventBackHistoryCache` middleware disables browser caching on authenticated citizen/staff pages (`no-store, no-cache`).
 - [ ] **Multi-Factor Authentication (MFA):** Two-factor authentication (TOTP) available and mandated for administrative and finance-handling accounts.
-- [ ] **Rate Limiting:** Form submission endpoints, login routes, and public APIs implement strict Redis / cache-based rate limits (`throttle` middleware).
+
+### 5.2 CloudPanel & Cloudflare Infrastructure Acceptance (DevOps / Sysadmin Sign-Off)
+- [ ] **CloudPanel Nginx Security Headers:** Vhost template injects `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Permissions-Policy`.
+- [ ] **CloudPanel PHP-FPM Hardening:** PHP settings enforce `display_errors = Off`, `expose_php = Off`, and `allow_url_fopen = Off`. Site isolated under dedicated unprivileged user.
+- [ ] **CloudPanel Sensitive File Blocking:** Nginx blocks direct access to `/\.(env|git|htaccess)` and `/(composer\.(json|lock)|package(-lock)?\.json)`.
+- [ ] **Database Freeze Trigger Installed:** `trg_freeze_audit_ledger` trigger verified on PostgreSQL / MySQL `audit_activities` table.
+- [ ] **Cloudflare SSL/TLS Encryption:** Encryption mode set to **Full (Strict)** with Minimum TLS Version `TLS 1.2` (or `TLS 1.3`).
+- [ ] **Cloudflare Edge HTTPS:** "Always Use HTTPS" = ON; "Automatic HTTPS Rewrites" = ON; Edge HSTS enabled (max-age=31536000, includeSubDomains, preload).
+- [ ] **Cloudflare Bot & Scraper Defense:** "Bot Fight Mode" enabled; Security Level set to "Medium"; "Browser Integrity Check" active.
+- [ ] **Cloudflare Rate Limiting Rule:** Free tier WAF rate limiting rule active on `/login` and `/office/switch` (5 requests / 10s per IP).
 
 ---
 

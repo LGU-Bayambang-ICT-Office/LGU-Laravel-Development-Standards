@@ -6,6 +6,7 @@ namespace Lgu\GovSuite;
 use Illuminate\Support\ServiceProvider;
 use Lgu\GovSuite\Commands\LguAuditCommand;
 use Lgu\GovSuite\Commands\LguInstallCommand;
+use Lgu\GovSuite\Commands\LguNpcSyncCommand;
 
 /**
  * LGU GovSuite Service Provider.
@@ -27,6 +28,7 @@ class LguServiceProvider extends ServiceProvider
             $this->commands([
                 LguInstallCommand::class,
                 LguAuditCommand::class,
+                LguNpcSyncCommand::class,
             ]);
 
             // 1. Publish Configuration

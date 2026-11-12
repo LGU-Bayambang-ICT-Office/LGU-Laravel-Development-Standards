@@ -32,7 +32,20 @@ This codebase complies with **LGU-ICTO-STD-2026-V1** for Philippine municipal go
    - Restrict RAW SQL (`DB::raw`, `whereRaw`, etc.) to Actions/Services for critical need (aggregations, window functions, locks).
    - Mandatory PDO parameter binding (never interpolate variables with `$`). Always preserve `office_id` scoping.
 
-7. **Quality & Audit Checks:**
+7. **OWASP Top 10:2025 Application Security:**
+   - Prohibit `$guarded = []`. Always define explicit `$fillable` arrays on domain models.
+   - Default to `{{ $var }}` in Blade. `{!! $var !!}` is strictly forbidden unless sanitized via HTMLPurifier.
+   - Enforce `throttle` on authentication routes; prohibit `unserialize()`.
+   - Align hosting with CloudPanel Nginx security headers and Cloudflare Free Tier (Full Strict SSL, Bot Fight Mode, Rate Limiting).
+
+8. **Quality & Audit Checks:**
    - Format with `./vendor/bin/pint --test`
    - Analyse with `./vendor/bin/phpstan analyse`
-   - Run statutory compliance check: `php artisan lgu:audit`
+   - Run dependency check: `composer audit`
+   - Run statutory & OWASP compliance check: `php artisan lgu:audit`
+
+9. **Updating for Future OWASP Top 10 Versions (AI Agent Runbook):**
+   - Consult `AGENTS.md` and `CONTRIBUTING.md` for the 5-step maintenance runbook.
+   - Update `src/Security/SecurityStandardsMapper.php` constants (`DEFAULT_OWASP_VERSION`, `ACTIVE_OWASP_LABEL`) and add the new category mapping in `getFrameworks()`.
+   - Invariant scanner code in `LguAuditCommand.php` remains unchanged unless a novel attack vector requires a new `SEC-*` rule.
+   - Synchronize Section 2.6 in `LARAVEL_LGU_DEVELOPMENT_STANDARDS.md` and Section 5.1 in `VENDOR_DELIVERY_CHECKLIST.md`.

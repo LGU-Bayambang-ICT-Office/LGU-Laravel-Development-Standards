@@ -1,0 +1,110 @@
+[
+  {
+    "id": "NPC-CIRC-2016-01",
+    "type": "Circular",
+    "number": "NPC Circular No. 16-01",
+    "year": 2016,
+    "title": "Security of Personal Data in Government Agencies",
+    "summary": "Mandates technical, physical, and organizational security measures for processing personal data in government information systems, including mandatory encryption (AES-256) of SPI at rest and in transit, storage segregation, and continuous access audit trails.",
+    "url": "https://privacy.gov.ph/wp-content/uploads/2022/01/Sgd-NPC-Circular-16-01-Security-of-Personal-Data-in-Government-Agencies.pdf"
+  },
+  {
+    "id": "NPC-CIRC-2016-03",
+    "type": "Circular",
+    "number": "NPC Circular No. 16-03",
+    "year": 2016,
+    "title": "Personal Data Breach Management",
+    "summary": "Outlines mandatory procedures for security incident management, containment protocols, and mandatory notification to the NPC and affected data subjects within 72 hours of personal data breach discovery.",
+    "url": "https://privacy.gov.ph/wp-content/uploads/2022/01/sgd-npc-circular-16-03-personal-data-breach-management.pdf"
+  },
+  {
+    "id": "NPC-CIRC-2017-01",
+    "type": "Circular",
+    "number": "NPC Circular No. 17-01",
+    "year": 2017,
+    "title": "Registration of Personal Data Processing Systems",
+    "summary": "Requirements and technical guidelines for registering automated data processing systems and appointing designated Data Protection Officers (DPOs).",
+    "url": "https://privacy.gov.ph/wp-content/uploads/2022/01/NPC_Circular-17-01-Registration_final.pdf"
+  },
+  {
+    "id": "NPC-CIRC-2018-02",
+    "type": "Circular",
+    "number": "NPC Circular No. 18-02",
+    "year": 2018,
+    "title": "Guidelines on Compliance Checks",
+    "summary": "Rules and procedures for on-site visits, privacy audits, compliance orders, and statutory investigations conducted by the Commission.",
+    "url": "https://privacy.gov.ph/wp-content/uploads/2022/01/Circular18-02_ComplianceCheck.pdf"
+  },
+  {
+    "id": "NPC-CIRC-2020-03",
+    "type": "Circular",
+    "number": "NPC Circular No. 20-03",
+    "year": 2020,
+    "title": "Data Sharing Agreements",
+    "summary": "Rules and mandatory safeguards for inter-agency data sharing agreements (DSAs), multi-office data exchange, API authentication, and tenant isolation, amending Circular 16-02.",
+    "url": "https://privacy.gov.ph/wp-content/uploads/2021/01/Circular-Data-Sharing-Agreement-amending-16-02-21-Dec-2020-clean-copy-FINAL-LYA-and-JDN-signed-minor-edit.pdf"
+  },
+  {
+    "id": "NPC-ADV-2021-01",
+    "type": "Advisory",
+    "number": "NPC Advisory No. 2021-01",
+    "year": 2021,
+    "title": "Data Subject Rights",
+    "summary": "Operational workflows and response timeliness for handling citizen requests for access, rectification, erasure, and blocking of personal data.",
+    "url": "https://privacy.gov.ph/wp-content/uploads/2026/05/SGD-Advisory-DS-Rights-29-Jan-2021.pdf"
+  },
+  {
+    "id": "NPC-CIRC-2022-01",
+    "type": "Circular",
+    "number": "NPC Circular No. 2022-01",
+    "year": 2022,
+    "title": "Guidelines on Administrative Fines",
+    "summary": "Schedule and framework for imposing administrative penalties, classifications of grave and major infractions, and fine computation matrices for DPA violations.",
+    "url": "https://privacy.gov.ph/wp-content/uploads/2022/08/NPC-CIRCULAR-NO.-2022-01-GUIDELINES-ON-ADMINISTRATIVE-FINES-dated-08-AUGUST-2022-w-SGD.pdf"
+  },
+  {
+    "id": "NPC-CIRC-2022-04",
+    "type": "Circular",
+    "number": "NPC Circular No. 2022-04",
+    "year": 2022,
+    "title": "Registration of Personal Data Processing System, Notification Regarding Automated Decision-Making or Profiling, Designation of DPO, and NPC Seal of Registration",
+    "summary": "Mandatory DPS registration thresholds, DPO accreditation procedures, notifications regarding automated profiling algorithms, and the NPC Seal of Registration guidelines.",
+    "url": "https://privacy.gov.ph/wp-content/uploads/2023/05/Circular-2022-04-2.pdf"
+  },
+  {
+    "id": "NPC-CIRC-2023-03",
+    "type": "Circular",
+    "number": "NPC Circular No. 2023-03",
+    "year": 2023,
+    "title": "Guidelines on Identification Cards",
+    "summary": "Protections and data minimization standards regarding the photocopying, scanning, collection, and verification of government and personal identity cards.",
+    "url": "https://privacy.gov.ph/wp-content/uploads/2023/11/Published-NPC-Circular-No.-2023-03_Guidelines-on-Identification-Cards_07Nov2023.pdf"
+  },
+  {
+    "id": "NPC-CIRC-2023-04",
+    "type": "Circular",
+    "number": "NPC Circular No. 2023-04",
+    "year": 2023,
+    "title": "Guidelines on Consent",
+    "summary": "Standards for freely given, specific, and informed consent in online portals, privacy notices, and public sector statutory processing authorities.",
+    "url": "https://privacy.gov.ph/wp-content/uploads/2023/11/NPC-Circular-No.-2023-04_Guidelines-on-Consent_07Nov2023.pdf"
+  },
+  {
+    "id": "NPC-CIRC-2023-07",
+    "type": "Circular",
+    "number": "NPC Circular No. 2023-07",
+    "year": 2023,
+    "title": "Guidelines on Legitimate Interest",
+    "summary": "Criteria and procedural tests (Purpose, Necessity, and Balancing Tests) for invoking Legitimate Interest as a lawful ground for processing personal data.",
+    "url": "https://privacy.gov.ph/wp-content/uploads/2024/01/NPC-Circular-No.-2023-07_Guidelines-on-Legitimate-Interest_13-December-2023.pdf"
+  },
+  {
+    "id": "NPC-CIRC-2024-02",
+    "type": "Circular",
+    "number": "NPC Circular No. 2024-02",
+    "year": 2024,
+    "title": "Guidelines on the Processing of Personal Data through Closed-Circuit Television (CCTV) Systems",
+    "summary": "Governs public and municipal video surveillance, retention limits, signage requirements, and pixelation/masking of third-party bystanders.",
+    "url": "https://privacy.gov.ph/wp-content/uploads/2024/08/NPC-Circular-No.-2024-02-CCTV-Systems.pdf"
+  }
+]

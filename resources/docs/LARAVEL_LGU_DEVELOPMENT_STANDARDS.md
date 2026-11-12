@@ -11,12 +11,14 @@
 
 ## Table of Contents
 1. [Executive Mandate & Governance Framework](#1-executive-mandate--governance-framework)
-2. [Philippine Statutory & Regulatory Compliance Matrix](#2-philippine-statutory--regulatory-compliance-matrix)
+2. [Philippine Statutory, Regulatory & Security Framework Matrix](#2-philippine-statutory--regulatory-compliance-matrix)
    - [2.1 Data Privacy Act of 2012 (RA 10173) & NPC Guidelines](#21-data-privacy-act-of-2012-ra-10173--npc-guidelines)
    - [2.2 ARTA / Ease of Doing Business Act (RA 11032)](#22-arta--ease-of-doing-business-act-ra-11032)
    - [2.3 Commission on Audit (COA) Circulars & Financial Ledgers](#23-commission-on-audit-coa-circulars--financial-ledgers)
    - [2.4 National Archives of the Philippines (NAP) Records Schedules](#24-national-archives-of-the-philippines-nap-records-schedules)
    - [2.5 Civil Service Commission (CSC) Requirements](#25-civil-service-commission-csc-requirements)
+   - [2.6 OWASP Top 10:2025 Application Security Framework](#26-owasp-top-102025-application-security-framework)
+   - [2.7 Statutory vs. OWASP Top 10 Reconciliation Matrix](#27-statutory-vs-owasp-top-10-reconciliation-matrix)
 3. [Standard Technology Stack & Baseline](#3-standard-technology-stack--baseline)
 4. [MVC Architecture & Appropriate Livewire Usage](#4-mvc-architecture--appropriate-livewire-usage)
    - [4.1 The Role of Traditional MVC in Enterprise Government Systems](#41-the-role-of-traditional-mvc-in-enterprise-government-systems)
@@ -46,7 +48,15 @@
    - [7.5 Balanced Database Query Architecture & RAW SQL Policy](#75-balanced-database-query-architecture--raw-sql-policy)
    - [7.6 Architectural Rationale, Benefits, and Caveats](#76-architectural-rationale-benefits-and-caveats)
 8. [Multi-Office Department Scoping & Data Isolation](#8-multi-office-department-scoping--data-isolation)
-9. [Security Engineering & Municipal Workstation Hardening](#9-security-engineering--municipal-workstation-hardening)
+9. [Security Engineering, OWASP Top 10 Hardening & Municipal Workstations](#9-security-engineering-owasp-top-10-hardening--municipal-workstations)
+   - [9.1 Content Security Policy (CSP) & Vite Nonces](#91-content-security-policy-csp)
+   - [9.2 Workstation Session Timeout](#92-workstation-session-timeout)
+   - [9.3 Browser Cache Prevention for Sensitive Data](#93-browser-cache-prevention-for-sensitive-data)
+   - [9.4 Multi-Factor Authentication (MFA)](#94-multi-factor-authentication-mfa)
+   - [9.5 Standard HTTP Security Headers](#95-standard-http-security-headers)
+   - [9.6 Cross-Site Scripting (XSS) Prevention & Blade Sanitization](#96-cross-site-scripting-xss-prevention--blade-sanitization)
+   - [9.7 Server-Side Request Forgery (SSRF) Egress Filtering](#97-server-side-request-forgery-ssrf-egress-filtering)
+   - [9.8 Architectural Rationale, Benefits, and Caveats](#98-architectural-rationale-benefits-and-caveats)
 10. [Immutable Audit Ledgers & Cryptographic Verification](#10-immutable-audit-ledgers--cryptographic-verification)
 11. [Statutory Government Service Workflows & SLA Timers](#11-statutory-government-service-workflows--sla-timers)
 12. [File Management, Printable Forms & Archival](#12-file-management-printable-forms--archival)
@@ -63,6 +73,11 @@
    - [15.5 Departmental Scoping & Multi-Office Context](#155-departmental-scoping--multi-office-context)
    - [15.6 Architectural Rationale, Benefits, and Caveats](#156-architectural-rationale-benefits-and-caveats)
 16. [Deployment, Infrastructure & Disaster Recovery](#16-deployment-infrastructure--disaster-recovery)
+   - [16.1 Infrastructure Topologies](#161-infrastructure-topologies)
+   - [16.2 Standard Hosting Blueprint: CloudPanel on Ubuntu 24.04 LTS](#162-standard-hosting-blueprint-cloudpanel-on-ubuntu-2404-lts)
+   - [16.3 Edge Security Blueprint: Cloudflare Free Tier (CDN, WAF & SSL)](#163-edge-security-blueprint-cloudflare-free-tier-cdn-waf--ssl)
+   - [16.4 Offline & Brownout Resilience](#164-offline--brownout-resilience)
+   - [16.5 Disaster Recovery & Backup Protocol](#165-disaster-recovery--backup-protocol)
 17. [Third-Party Vendor Delivery Acceptance Gates](#17-third-party-vendor-delivery-acceptance-gates)
 
 ---
@@ -153,6 +168,13 @@ Under RA 10173, citizens have the "Right to Erasure / Right to be Forgotten." Ho
 #### 2.1.4 72-Hour Security Incident & Breach Notification
 NPC Circular 16-03 requires notification of personal data breaches within 72 hours. All LGU applications processing citizen records must incorporate an administrative breach logging mechanism and immediate email/alert triggers to the registered LGU Data Protection Officer (DPO).
 
+#### 2.1.5 National Privacy Commission (NPC) Issuances & Applicability Inventory (`php artisan lgu:npc-sync`)
+Beyond statutory baseline rules, software developers and vendors must maintain an active inventory of relevant National Privacy Commission (NPC) issuances (Circulars, Advisories, and Resolutions) applicable to the system's data processing lifecycle:
+- **Dedicated Sync Command:** Developers run `php artisan lgu:npc-sync` before submitting code for audit. The command connects to the NPC repository (`https://privacy.gov.ph/pips-and-pics/advisories-circulars//`) to discover gazetted circulars, with automatic fallback to a bundled offline statutory seed catalog if the government portal is unreachable or rate-limited.
+- **Interactive Applicability Assessment:** For each issuance, the command prompts the developer to evaluate whether the regulation applies to the application's domain (e.g., Circular 16-01 for government data security, Circular 18-02 for inter-agency data sharing, Circular 20-03 for processing minors' data, Circular 22-01 for DPO and DPS registration).
+- **Persistent Local Inventory:** Determinations are stored locally in `storage/app/lgu/npc-assessment.json`.
+- **Compliance Auditor Verification:** During `php artisan lgu:audit`, the engine verifies that the NPC assessment has been conducted. Completed assessments generate an official **Applicable NPC Issuances Inventory** across CLI, Markdown, and JSON audit artifacts for formal DPO and ICTO review. Missing assessments yield an automated statutory warning.
+
 ---
 
 ### 2.2 ARTA / Ease of Doing Business Act (RA 11032)
@@ -228,6 +250,45 @@ Human resource systems (e.g., iHRIS) must implement standard CSC civil service r
 - **Leave Credit Accrual:** Execution of CSC Omnibus Rules on Leave: regular employees earn exactly **1.25 days of vacation leave** and **1.25 days of sick leave** per month of full-time service.
 - **SPMS Framework:** Strategic Performance Management System compliance, generating official Office Performance Commitment and Review (OPCR) and Individual Performance Commitment and Review (IPCR) calibrated matrices.
 - **Personal Data Sheet:** Official Civil Service Form No. 212 (Revised 2017) export compliance in native spreadsheet format.
+
+---
+
+### 2.6 OWASP Top 10 Application Security Framework & Decoupled Invariant Architecture
+
+To reconcile Philippine public sector statutory compliance with international cybersecurity standards, all software engineered for or procured by the LGU must satisfy the **OWASP Top 10** benchmark.
+
+#### 2.6.1 Decoupled Invariant Rules & Compliance Mapping Architecture
+To ensure long-term sustainability across 3–4 year OWASP revision cycles (e.g., 2021, 2025, 2029) and multi-regulatory Philippine public sector mandates (such as DICT Cybersecurity Directives and National Privacy Commission DPA-2012 circulars), the LGU Compliance Auditor (`php artisan lgu:audit`) strictly decouples **technical security invariant checks** from transient external regulatory category numbering:
+- **Core Security Invariants:** Pure Laravel/PHP architectural checks named after *what they test* (`SEC-MASS-ASSIGNMENT`, `SEC-ENV-DEBUG-CSP`, `SEC-SUPPLY-CHAIN`, `SEC-CRYPTO-PII`, `SEC-BLADE-XSS`, `SEC-SOD-POLICY`, `SEC-AUTH-THROTTLE`, `SEC-SERIALIZATION`, `SEC-AUDIT-LOGGING`, `SEC-FAIL-CLOSED-SCOPE`).
+- **Declarative Compliance Mapping Matrix (`Lgu\GovSuite\Security\SecurityStandardsMapper`):** Maps invariant check results to regulatory frameworks.
+- **Explicit Version Attribution:** All generated audit reports (CLI, JSON, Markdown) explicitly indicate the evaluated framework edition. By default, the system enforces **OWASP Top 10:2025 (Active Version)**; historical or custom projections can be evaluated dynamically via `--owasp-version=2021`.
+
+#### 2.6.2 OWASP Top 10:2025 Controls & Infrastructure Matrix (Active Version)
+
+| OWASP (2025) Category | Description & Primary Threat | LGU Architectural & Code Control | CloudPanel & Cloudflare Infrastructure Action |
+| :--- | :--- | :--- | :--- |
+| **A01:2025 Broken Access Control** | Unauthorized privilege escalation, horizontal data leakage across offices, IDOR parameter tampering, and SSRF. | Dual-Identifier Standard (`HasRouteUuid`), fail-closed multi-office global scopes (`OfficeScope`), strict policy coverage (`{Model}Policy`), ban on `$guarded = []`. | Cloudflare WAF payload limits (max 25MB body size); Cloudflare Managed Access Control rules. |
+| **A02:2025 Security Misconfiguration** | Insecure defaults, open debug panels, missing security headers, unhardened permissions. | Enforce `APP_DEBUG=false` in production; register `AppCspPolicy` with Vite nonce injection; secure session cookies (`HttpOnly`, `SameSite=lax`, `Secure`). | CloudPanel Nginx vhost security headers (`X-Frame-Options`, `X-Content-Type-Options: nosniff`); Cloudflare Edge "Always Use HTTPS" & HSTS (1-year preload). |
+| **A03:2025 Software Supply Chain Failures** | Compromised third-party packages, unpinned dependencies, malicious updates. | Mandate tracked `composer.lock` and `package-lock.json`; automated CI execution of `composer audit` and `npm audit`. | In CloudPanel PHP-FPM, disable `allow_url_fopen = Off`; isolate site runtime under dedicated unprivileged system users. |
+| **A04:2025 Cryptographic Failures** | Cleartext storage of sensitive data, weak key management, unencrypted network transmission. | Mandatory field encryption for Sensitive Personal Information (SPI) via `EncryptedPii` (AES-256-CBC) with isolated `PII_ENCRYPTION_KEY`; companion HMAC-SHA256 blind indexing (`HasPiiHashing`). | Cloudflare SSL/TLS set to "Full (Strict)" with Minimum TLS 1.2/1.3; CloudPanel Let's Encrypt / Cloudflare Origin CA certificate renewal. |
+| **A05:2025 Injection** | SQL injection, Cross-Site Scripting (XSS), command injection via untrusted inputs. | Balanced Database Query Architecture (Section 7.5); 100% PDO parameter bindings; strict prohibition of raw SQL in Livewire/Blade; double-curly auto-escaping `{{ $var }}` with `{!! $var !!}` banned unless sanitized. | Cloudflare Bot Fight Mode, Browser Integrity Check, and Free Managed WAF rulesets active. |
+| **A06:2025 Insecure Design** | Absence of threat modeling, lack of segregation of duties, flawed financial business flows. | Institutional Segregation of Duties (SoD) enforced via `BaseGovernmentPolicy` (creator cannot approve); statutory approval ceilings; `$afterCommit = true` on transactional events. | Maintain strict physical and database isolation between staging (sandbox) and production environments on independent CloudPanel sites. |
+| **A07:2025 Authentication Failures** | Brute force attacks, credential stuffing, session hijacking on public/shared kiosks. | Enforce 15-minute inactivity session logout (`EnforceSessionTimeout`); Fortify TOTP 2FA for all administrative/finance staff; `throttle` middleware on auth endpoints. | Cloudflare Free Rate Limiting Rule: limit `/login` and `/office/switch` to 5 requests per 10 seconds per IP address. |
+| **A08:2025 Software & Data Integrity Failures** | Unverified code/data deserialization, tampering with audit logs or financial ledgers. | Cryptographic continuous SHA-256 hash chaining (`AuditActivityObserver`); database freeze triggers (`freeze_audit_logs_trigger.sql`); ban on PHP `unserialize()`. | CloudPanel PostgreSQL / MySQL database triggers enforcing physical immutability against SQL `UPDATE` and `DELETE`. |
+| **A09:2025 Security Logging & Alerting Failures** | Undetected intrusion, lack of forensic audit trails for Ombudsman/COA investigations. | Immutable `audit_activities` ledger recording causer, department, old/new properties, and cryptographic row hash; `spatie/laravel-activitylog` for setting modifications. | CloudPanel Nginx access/error log rotation (`/var/log/nginx/`); monitoring for HTTP 4xx/5xx anomaly spikes. |
+| **A10:2025 Mishandling of Exceptional Conditions** | System crashes leaking stack traces, open-fail state leakage during unexpected errors. | Fail-closed tenant architecture (`OfficeScope` evaluates to `1 = 0` if session context is absent or corrupted); centralized exception handling hiding stack traces in production. | Cloudflare Custom Error Pages (500/502/503) suppressing server/PHP errors from citizen browsers. |
+
+---
+
+### 2.7 Statutory vs. OWASP Top 10 Reconciliation Matrix
+
+Where Philippine public sector statutory mandates introduce architectural tension with generic web application security conventions, engineers and vendors must adhere to the following binding reconciliation rules:
+
+| Conflict Area | Statutory Mandate (Philippine Law) | Generic Security Convention (OWASP / GDPR) | Authoritative LGU Reconciliation Rule |
+| :--- | :--- | :--- | :--- |
+| **Right-to-Erasure vs. Audit Retention** | **COA Circulars & NAP RA 9470:** Mandate a minimum 10-year immutable retention for financial vouchers, checks, and audit trails; destructive deletion or table truncation is a criminal violation. | **DPA RA 10173 & OWASP A01/A04:** Citizens have the right to request erasure / blocking of personal data. | **Anonymization Pipeline Mandate:** Requests for erasure on financial, taxation, or voucher records must execute an automated *anonymization pipeline* (`anonymize()`) that cryptographically scrambles personal identifiers (name, TIN, phone, physical address) into pseudonymized tokens, while strictly preserving financial gross amounts, timestamps, and row-level SHA-256 hash chains. Direct SQL `DELETE` or `TRUNCATE` is strictly prohibited. |
+| **Least Privilege vs. Departmental Oversight** | **Local Government Code (RA 7160):** Oversight departments (Municipal Accounting/MACCO, Municipal Treasury/MTO, Mayor's Office/MO, Internal Audit/IAS) have legal supervisory review authority over departmental disbursements and collections. | **OWASP A01 Broken Access Control:** Requires zero trust and strict multi-tenant isolation between operational departments. | **Policy-Mediated Oversight Inspection:** Oversight staff must never be granted wildcard database permissions or global superuser credentials. Cross-office record inspection must route through `BaseGovernmentPolicy::isWithinOfficeScope()` checking verified oversight office codes (`MACCO`, `MTO`, `MO`, `IAS`, `ICTO`). Every cross-office read access must automatically generate an immutable audit log entry. |
+| **Fail-Safe Operation vs. Citizen Service Continuity** | **ARTA RA 11032 (Ease of Doing Business):** Strictly enforces 3-day (simple), 7-day (complex), and 20-day (technical) processing clocks. Municipal brownouts or network drops cannot silently forfeit citizen queue status. | **OWASP A10 Mishandling Exceptions:** Dictates total fail-closed termination of requests when unexpected conditions or connection drops occur. | **Dual-Phase Offline Protection:** When connectivity is lost, the application must fail closed against backend database mutations to prevent split-brain ledgers, while the frontend activates the Alpine.js connection interceptor to preserve entered citizen form data in client-side encrypted storage until connectivity is restored. |
 
 ---
 
@@ -989,6 +1050,10 @@ class DisbursementVoucher extends Model
 }
 ```
 
+#### 7.3.1 Mass Assignment Defense (OWASP A01:2025)
+- **Strict Prohibition:** The anti-pattern `protected $guarded = [];` is **strictly forbidden** across all Eloquent models. Disabling guard protections exposes models to mass assignment attacks, allowing malicious actors to manipulate administrative fields (such as `is_admin`, `approval_limit_amount`, `office_id`, or `status`) via tampered request payloads.
+- **Mandate:** Models must declare an explicit `protected $fillable = [...]` whitelist containing strictly validated attributes. Any mass assignment vulnerability detected by `php artisan lgu:audit` will result in automated acceptance failure.
+
 ### 7.4 Foreign Key Deletion Rules
 - **Rule:** Cascading deletes (`cascadeOnDelete()`) are strictly forbidden on financial, transaction, voucher, personnel, or audit tables.
 - **Mandate:** Schema migrations must specify `onDelete('restrict')` or `restrictOnDelete()` on all historical foreign keys. If a department or user account is deactivated, existing transaction histories must remain intact to satisfy COA and NAP compliance.
@@ -1149,7 +1214,7 @@ public function apply(Builder $builder, Model $model): void
 
 ---
 
-## 9. Security Engineering & Municipal Workstation Hardening
+## 9. Security Engineering, OWASP Top 10 Hardening & Municipal Workstations
 
 ### 9.1 Content Security Policy (CSP)
 Cross-Site Scripting (XSS) is a severe vulnerability in government web portals handling citizen transactions.
@@ -1181,7 +1246,29 @@ Municipal staff and walk-in citizens frequently utilize shared workstations and 
 ### 9.4 Multi-Factor Authentication (MFA)
 Two-Factor Authentication (TOTP via Google Authenticator or hardware security tokens) is **mandatory** for all administrative users, finance officers, human resource personnel, and system operators. Fortify 2FA features must be enabled by default.
 
-### 9.5 Architectural Rationale, Benefits, and Caveats
+### 9.5 Standard HTTP Security Headers (OWASP A02:2025)
+Every response generated by the application must inject standard defensive HTTP headers to protect against framing, clickjacking, MIME sniffing, and cross-origin leakage:
+
+| Security Header | Standard Mandated Value | Defensive Purpose |
+| :--- | :--- | :--- |
+| **X-Frame-Options** | `SAMEORIGIN` | Blocks clickjacking by preventing the application from being embedded in iframes on untrusted domains. |
+| **X-Content-Type-Options** | `nosniff` | Prevents browsers from MIME-sniffing a response away from the declared content-type. |
+| **Referrer-Policy** | `strict-origin-when-cross-origin` | Strips sensitive path and query parameters from HTTP Referer headers when navigating externally. |
+| **Permissions-Policy** | `camera=(), microphone=(), geolocation=()` | Disables access to sensitive hardware APIs on municipal workstations unless explicitly required. |
+| **Strict-Transport-Security (HSTS)** | `max-age=31536000; includeSubDomains; preload` | Forces browsers to communicate exclusively over HTTPS for one year. |
+
+### 9.6 Cross-Site Scripting (XSS) Prevention & Blade Sanitization (OWASP A05:2025)
+1. **Default Auto-Escaping:** Developers must use double-curly braces `{{ $variable }}` for all dynamic values in Blade templates. Laravel's htmlspecialchars escaping is mandatory.
+2. **Unescaped `{!! $variable !!}` Prohibition:** Raw unescaped output is strictly forbidden for user-submitted data. If rich text or formatted municipal ordinances must be displayed, the payload must pass through an explicit HTMLPurifier sanitization service whitelist (`app/Services/HtmlSanitizerService.php`) allowing only structural tags (`<p>`, `<strong>`, `<em>`, `<ul>`, `<li>`, `<table>`).
+3. **Automated Auditor Verification:** `php artisan lgu:audit` scans all Blade views; any unescaped variable output flagged without a sanitizer will generate an automated compliance warning.
+
+### 9.7 Server-Side Request Forgery (SSRF) Egress Filtering (OWASP A01:2025)
+When municipal systems perform outbound HTTP requests (e.g., retrieving remote webhooks, fetching Landbank/eGov transaction receipts, or polling citizen SMS gateways):
+1. **Private Subnet Blocking:** The Laravel HTTP client must strictly validate destination IP addresses. Outbound requests targeting loopback addresses (`127.0.0.1`, `localhost`), private RFC1918 ranges (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), or cloud metadata IPs (`169.254.169.254`) must be aborted.
+2. **Timeout Enforcement:** All outbound calls must declare explicit timeouts: `Http::timeout(5)->connectTimeout(3)`.
+3. **Disable Redirect Following:** Outbound webhooks must not follow open redirects: `Http::withoutRedirecting()`.
+
+### 9.8 Architectural Rationale, Benefits, and Caveats
 
 | Dimension | Architectural Evaluation & Trade-offs |
 | :--- | :--- |
@@ -1736,7 +1823,7 @@ Policies encapsulate these exceptions explicitly via `isWithinOfficeScope()`, pr
 ## 16. Deployment, Infrastructure & Disaster Recovery
 
 ### 16.1 Infrastructure Topologies
-LGU systems operate under two approved deployment topologies:
+LGU systems operate under three approved deployment topologies:
 
 1. **Topology A: On-Premises Municipal Data Center**
    - **Host OS:** Ubuntu Server 24.04 LTS.
@@ -1750,7 +1837,118 @@ LGU systems operate under two approved deployment topologies:
    - Managed RDS PostgreSQL / MySQL with daily automated snapshots.
    - Cloudflare WAF for DDoS mitigation, bot blocking, and SSL termination.
 
-### 16.2 Offline & Brownout Resilience
+3. **Topology C (Standard Default Production & Staging): CloudPanel on Ubuntu 24.04 LTS with Cloudflare Free Tier**
+   - The authoritative reference implementation for departmental systems, public kiosks, and civic web applications.
+   - **Control Panel:** CloudPanel (PHP 8.4, isolated user per site, Nginx, MySQL/PostgreSQL, Redis).
+   - **Edge Protection:** Free Cloudflare Account providing Edge DNS, DDoS protection, Bot Fight Mode, Rate Limiting, and Full (Strict) SSL termination.
+
+### 16.2 Standard Hosting Blueprint: CloudPanel on Ubuntu 24.04 LTS
+
+#### 16.2.1 Site Creation & PHP-FPM Isolation
+1. In CloudPanel, create a new site using the **PHP Site** preset with PHP 8.4 and Document Root set to `public`.
+2. Each site must run under an isolated unprivileged system user (`site-user`).
+3. Under **PHP Settings**, apply the mandated runtime constraints:
+   - `memory_limit = 256M`
+   - `max_execution_time = 60`
+   - `display_errors = Off`
+   - `expose_php = Off`
+   - `allow_url_fopen = Off` (OWASP A03/A08 supply chain defense)
+
+#### 16.2.2 Hardened CloudPanel Nginx Vhost Configuration
+Under CloudPanel **Site Settings > Vhost**, replace or augment the vhost with the mandated defensive template:
+
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name example.bayambang.gov.ph;
+    root /home/site-user/htdocs/example.bayambang.gov.ph/public;
+
+    # SSL Certificates (Cloudflare Origin CA or Let's Encrypt)
+    ssl_certificate /etc/nginx/ssl-certificates/example.bayambang.gov.ph.crt;
+    ssl_certificate_key /etc/nginx/ssl-certificates/example.bayambang.gov.ph.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+
+    # OWASP A02:2025 Defensive Security Headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+
+    index index.php index.html;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # PHP-FPM Execution via Unix Socket
+    location ~ \.php$ {
+        include fastcgi_params;
+        fastcgi_intercept_errors on;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_pass unix:/var/run/php/php8.4-fpm-site-user.sock;
+    }
+
+    # OWASP A05: Block sensitive and hidden files
+    location ~ /\.(env|git|htaccess) {
+        deny all;
+        return 404;
+    }
+    location ~ /(composer\.(json|lock)|package(-lock)?\.json|phpunit\.xml) {
+        deny all;
+        return 404;
+    }
+    location ~ ^/(storage/logs|bootstrap/cache)/ {
+        deny all;
+        return 404;
+    }
+
+    # Static Asset Caching
+    location ~* \.(jpg|jpeg|png|gif|ico|css|js|woff2?|svg)$ {
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
+    }
+}
+```
+
+#### 16.2.3 Database Immutability Trigger Execution
+After running migrations (`php artisan migrate`), the system administrator must connect to the database in CloudPanel and execute [`database/sql/freeze_audit_logs_trigger.sql`](database/sql/freeze_audit_logs_trigger.sql) to seal the `audit_activities` ledger at the engine level.
+
+---
+
+### 16.3 Edge Security Blueprint: Cloudflare Free Tier (CDN, WAF & SSL)
+
+All public domains and citizen portals must route through Cloudflare Edge DNS. The free tier provides critical enterprise defenses when configured properly:
+
+#### 16.3.1 SSL/TLS Settings
+1. **Encryption Mode:** Navigate to **SSL/TLS > Overview** and select **Full (Strict)**. Never use "Flexible" (which transmits unencrypted citizen data between Cloudflare and CloudPanel origin).
+2. **Edge Certificates:** Under **SSL/TLS > Edge Certificates**:
+   - Toggle **Always Use HTTPS** = ON.
+   - Set **Minimum TLS Version** = `TLS 1.2` (or `TLS 1.3`).
+   - Toggle **Automatic HTTPS Rewrites** = ON.
+   - Under **HTTP Strict Transport Security (HSTS)**, enable HSTS with `max-age=31536000` (1 year), `includeSubDomains`, and `preload`.
+
+#### 16.3.2 Bot Defense & Browser Checks
+1. Under **Security > Bots**, toggle **Bot Fight Mode** = ON.
+2. Under **Security > Settings**:
+   - Set **Security Level** = `Medium`.
+   - Toggle **Browser Integrity Check** = ON (detects malicious scrapers and unauthenticated API harvesters).
+
+#### 16.3.3 Free WAF Rate Limiting Rule (OWASP A07 Defense)
+Cloudflare's free tier permits up to **5 Custom WAF Rate Limiting Rules**. The LGU standard mandates deploying at least one rule for credential protection:
+* **Rule Name:** `LGU Staff Login Rate Limit`
+* **Incoming Request Matching:** `URI Path equals "/login"` OR `URI Path equals "/office/switch"`
+* **Rate Threshold:** Exceeds `5 requests per 10 seconds` per IP address.
+* **Mitigation Action:** `Block` for `1 minute`.
+
+---
+
+### 16.4 Offline & Brownout Resilience
 Municipal operations in the Philippines frequently face localized power interruptions (brownouts) or telecommunication fiber cuts.
 - **Online-Only Transaction Mandate:** Transactions involving cash receipts, voucher issuance, and statutory clearances must strictly execute online to avoid split-brain ledgers or duplicate sequence numbers.
 - **Alpine.js Connection Interceptor:** Frontends must implement an offline connection banner. If `navigator.onLine` evaluates to `false`, the UI must immediately display a warning banner and disable submission buttons to prevent loss of user data:
@@ -1766,7 +1964,7 @@ Municipal operations in the Philippines frequently face localized power interrup
 </div>
 ```
 
-### 16.3 Disaster Recovery & Backup Protocol
+### 16.5 Disaster Recovery & Backup Protocol
 - **Database Snapshots:** Automated nightly dumps encrypted with AES-256 via GPG.
 - **Off-Site Replication:** Backups must be replicated off-site (e.g., secondary cloud bucket or geographically separated municipal facility) within 4 hours of generation.
 - **Restoration Verification Drills:** The ICTO systems administration team must conduct formal, documented database restoration drills **every six (6) months** to satisfy COA audit standards.
@@ -1781,12 +1979,15 @@ Prior to final acceptance, certificate of completion issuance, and procurement p
    - 100% green test execution via Pest PHP (`./vendor/bin/pest`).
    - Zero violations on Laravel Pint (`./vendor/bin/pint --test`).
    - Zero errors on Larastan Level 5 (`./vendor/bin/phpstan analyse`).
-   - Zero FAIL findings on the LGU Compliance Auditor (`php artisan lgu:audit --strict`), enforcing architectural tiers, event safety, and RAW query restrictions.
+   - Zero High or Critical security advisories on dependency audits (`composer audit` and `npm audit`).
+   - Zero FAIL findings on the LGU Compliance Auditor (`php artisan lgu:audit --strict`), evaluating both Philippine statutory standards and the OWASP Top 10:2025 security assessment.
    - Reversible database migrations (`php artisan migrate:fresh --seed`) with deterministic, realistic seed fixtures.
 
 2. **Gate 2: Security & Statutory Compliance Sign-off**
    - Verification of the Dual-Identifier Standard (`BIGINT id` PK + `uuid` route key).
    - Strict adherence to the Balanced Query Architecture (zero RAW SQL in Livewire/Blade; 100% PDO parameter binding on critical backend queries).
+   - Complete adherence to the OWASP Top 10:2025 application security baseline (zero unescaped Blade `{!! !!}` tags, mass assignment protection via explicit `$fillable`, route rate limiting).
+   - Verification of CloudPanel Nginx vhost security headers and Cloudflare Free Tier edge configuration (Full Strict SSL, Bot Fight Mode, Rate Limiting Rule).
    - DPA RA 10173 SPI field encryption and blind index testing.
    - COA cryptographic audit hash chain verification and database trigger locks.
    - ARTA RA 11032 SLA engine adherence and holiday calculation verification.

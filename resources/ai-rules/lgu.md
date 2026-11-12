@@ -16,5 +16,7 @@ When working on this repository, you must act as a Senior Government Software En
 - **At-Rest SPI Encryption:** Apply `EncryptedPii` cast to sensitive personal data and implement companion `_blind_index` columns with `hashPii()`.
 - **Authorization:** Prohibit `$user->hasRole(...)` or `@role(...)`. Every domain model requires an Eloquent Policy checking atomic permissions via `$user->hasPermissionTo(...)` alongside active office scoping (`OfficeScope`).
 - **Balanced Query Architecture:** Default to Eloquent ORM. Never use RAW SQL queries in Livewire components or Blade views. Restrict RAW SQL (`DB::raw`, `whereRaw`, etc.) to Actions/Services for critical need (aggregations, window functions) with 100% PDO parameter bindings (no `$var` interpolation) and explicit `office_id` scoping.
+- **OWASP Top 10:2025 Application Security:** Ban `protected $guarded = []`; enforce explicit `$fillable` arrays. Disallow raw `{!! $var !!}` in Blade unless sanitized. Enforce route `throttle` on auth endpoints and prohibit `unserialize()`.
+- **Infrastructure Blueprint:** Align with CloudPanel Nginx defensive headers and Cloudflare Free Tier (Full Strict SSL, Bot Fight Mode, Rate Limiting).
 - **Audit Verification:** Ensure audit activities implement SHA-256 cryptographic hash chaining.
-- **Verification:** Ensure `./vendor/bin/pint --test` and `./vendor/bin/phpstan analyse` pass with 0 errors. Run `php artisan lgu:audit`.
+- **Verification:** Ensure `./vendor/bin/pint --test`, `./vendor/bin/phpstan analyse`, and `composer audit` pass with 0 errors. Run `php artisan lgu:audit`.

@@ -40,8 +40,23 @@ When generating, modifying, or reviewing code, you MUST adhere to the following 
 - Audit log rows must implement SHA-256 continuous cryptographic hash chaining (`H_n = SHA256(H_{n-1} || Record_n)`).
 - Audit tables must be locked against UPDATE and DELETE operations.
 
-## 7. Verification Commands
+## 7. OWASP Top 10:2025 Application Security & Infrastructure
+- Never write protected $guarded = []. Always define explicit protected $fillable arrays on Eloquent models.
+- Default to double-curly braces {{ $var }} in Blade. Raw {!! $var !!} is strictly forbidden unless sanitized via HTMLPurifier.
+- Outbound HTTP requests must filter private IP subnets (RFC1918) and enforce explicit timeouts.
+- Never use dangerous PHP unserialize(); use json_decode() for structured data.
+- Attach throttle:login or throttle:6,1 to authentication and sensitive submission routes.
+- Align hosting with CloudPanel Nginx security headers and Cloudflare Full (Strict) SSL with rate limiting.
+
+## 8. Verification Commands
 Always verify your changes with:
 - Pint: `./vendor/bin/pint --test`
 - Larastan: `./vendor/bin/phpstan analyse` (Level 5 minimum)
-- LGU Compliance Audit: `php artisan lgu:audit`
+- Dependency Audit: `composer audit`
+- LGU Statutory & OWASP Compliance Audit: `php artisan lgu:audit`
+
+## 9. Updating Future OWASP Top 10 Versions (AI Agent Runbook)
+- When instructed to update this package for future OWASP Top 10 editions (e.g., 2028 or 2029), follow the 5-step maintenance runbook in `AGENTS.md` and `CONTRIBUTING.md`.
+- Update `src/Security/SecurityStandardsMapper.php` constants (`DEFAULT_OWASP_VERSION`, `ACTIVE_OWASP_LABEL`) and category mappings in `getFrameworks()`.
+- Do NOT rewrite scanner logic in `LguAuditCommand.php` unless a novel attack vector requires an additional `SEC-*` invariant check.
+- Synchronize Section 2.6 in `LARAVEL_LGU_DEVELOPMENT_STANDARDS.md` and Section 5.1 in `VENDOR_DELIVERY_CHECKLIST.md`.

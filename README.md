@@ -119,12 +119,14 @@ graph LR
     COA["Commission on Audit (COA)<br>• Immutable Audit Ledgers<br>• Cryptographic Hash Chaining<br>• DB Trigger Freezes"]
     NAP["National Archives (NAP)<br>• General Records Schedules<br>• Formal Disposal Requests<br>• Office Routing Slips"]
     CSC["Civil Service Commission (CSC)<br>• Plantilla/Casual/JO Scoping<br>• 1.25 Leave Credit Rules<br>• SPMS (OPCR/IPCR) Matrices"]
+    OWASP["OWASP Top 10:2025<br>• Broken Access Control & IDOR<br>• Security Misconfiguration<br>• Supply Chain & Mass Assignment"]
 
     LGU --> DPA
     LGU --> ARTA
     LGU --> COA
     LGU --> NAP
     LGU --> CSC
+    LGU --> OWASP
 ```
 
 ---
@@ -143,10 +145,16 @@ php artisan test
 # 3. Perform static type analysis (Level 5)
 ./vendor/bin/phpstan analyse
 
-# 4. Run LGU statutory compliance auditor
-php artisan lgu:audit --strict
+# 4. Run dependency security audit
+composer audit
 
-# 5. Verify database migration reversibility & deterministic seeding
+# 5. Synchronize & assess National Privacy Commission (NPC) circulars
+php artisan lgu:npc-sync
+
+# 6. Run LGU statutory & OWASP Top 10 compliance auditor (decoupled invariant rules)
+php artisan lgu:audit --strict --output # Enforces OWASP Top 10:2025; saves report to storage/app/lgu/audit-report.md
+
+# 7. Verify database migration reversibility & deterministic seeding
 php artisan migrate:fresh --seed
 ```
 

@@ -118,6 +118,41 @@ All automated tests must pass with 100% green status. When introducing new class
 
 ---
 
+## 🤖 AI Agent & Maintainer Guide: Updating for Future OWASP Top 10 Versions
+
+When instructed to update this package for a new OWASP Top 10 revision (e.g., `OWASP Top 10:2028` or `OWASP Top 10:2029`), follow this systematic procedure:
+
+### 1. Update the Mapping Matrix (`src/Security/SecurityStandardsMapper.php`)
+- Update `DEFAULT_OWASP_VERSION` constant (e.g., `'2029'`).
+- Update `ACTIVE_OWASP_LABEL` constant (e.g., `'OWASP Top 10:2029 (Active Version)'`).
+- In `getFrameworks()`, add the new framework entry for the new version:
+  - Map each new category (`A01:2029` .. `A10:2029`) to the underlying Technical Security Invariant Rule IDs (`SEC-MASS-ASSIGNMENT`, `SEC-ENV-DEBUG-CSP`, `SEC-SUPPLY-CHAIN`, `SEC-CRYPTO-PII`, `SEC-BLADE-XSS`, `SEC-SOD-POLICY`, `SEC-AUTH-THROTTLE`, `SEC-SERIALIZATION`, `SEC-AUDIT-LOGGING`, `SEC-FAIL-CLOSED-SCOPE`).
+  - Move the previous edition (e.g., `2025`) to historical status (`'2025 (Historical Benchmark)'`).
+
+### 2. Add New Invariants Only If Novel Vectors Emerge (`src/Commands/LguAuditCommand.php`)
+- **Category Reordering / Merging:** Requires **zero** changes to `LguAuditCommand.php` scanner code. The declarative mapping matrix handles all category translation.
+- **Novel Attack Vectors:** If the new OWASP revision introduces an unprecedented vulnerability class (e.g., LLM prompt injection or quantum crypto transition), implement a dedicated invariant method `checkInvariant{Vector}()` with a new unique Rule ID and register it in `auditSecurityInvariants()`.
+
+### 3. Review Reconciliations & Infrastructure Playbook
+- Verify `SecurityStandardsMapper::getStatutoryReconciliations()`: ensure statutory directives (DPA RA 10173 vs. COA retention, Least Privilege vs. Oversight Access, Fail-Closed vs. ARTA) accurately cite the new OWASP category numbers.
+- Verify `SecurityStandardsMapper::getInfrastructurePlaybook()`: check if CloudPanel or Cloudflare configurations require additional security directives.
+
+### 4. Synchronize Documentation & Checklists
+1. `LARAVEL_LGU_DEVELOPMENT_STANDARDS.md` and `resources/docs/LARAVEL_LGU_DEVELOPMENT_STANDARDS.md`:
+   - Update Section 2.6.2 table with the new OWASP categories, descriptions, code fixes, and CloudPanel/Cloudflare actions.
+2. `VENDOR_DELIVERY_CHECKLIST.md` and `resources/docs/VENDOR_DELIVERY_CHECKLIST.md`:
+   - Update Section 5.1 checklist items for the new OWASP categories.
+3. `README.md`:
+   - Update framework version labels and mermaid architecture diagrams.
+
+### 5. Update Tests & Verify Quality Gates
+- In `tests/LguAuditCommandTest.php`, update assertions to verify the new active version label and add the previous version to the fallback test.
+- Run `php -l` on all PHP files.
+- Run `./vendor/bin/pint --test` and `./vendor/bin/phpstan analyse`.
+- Run PHPUnit tests to ensure 100% green status.
+
+---
+
 ## 📝 Commit Conventions
 
 We follow [Conventional Commits](https://www.conventionalcommits.org/):
