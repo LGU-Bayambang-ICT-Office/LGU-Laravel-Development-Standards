@@ -35,6 +35,28 @@ AI agents (Antigravity, Claude Code, Cursor, Copilot, Codex, Windsurf) working i
 
 ---
 
+## 🤖 LGU AI Skills Suite (`.agents/skills/`)
+
+The repository includes a triad of autonomous AI agent skills designed to work in conjunction with **Laravel Boost** and the **Model Context Protocol (MCP)**:
+
+| Skill | Directory | Primary Role & Capabilities |
+| :--- | :--- | :--- |
+| **`lgu-code-author`** | `.agents/skills/lgu-code-author` | **Code Generation:** Architectural recipes for migrations (Dual-ID), models (`EncryptedPii` + blind index), Action/Service boundaries, `afterCommit` event safety, Segregation of Duties policies, and dedicated MVC routes. |
+| **`lgu-audit-reviewer`** | `.agents/skills/lgu-audit-reviewer` | **Audit & Reporting:** Executes the compliance scanner via MCP or CLI, conducts semantic deep-dives on non-compliant files, and generates an executive Markdown audit report with ready-to-apply code replacement diffs. |
+| **`lgu-standards-maintainer`** | `.agents/skills/lgu-standards-maintainer` | **Regulatory Curation:** Researches future OWASP Top 10 editions and NPC Data Privacy issuances online, confirms invariant mappings interactively, and updates mapping matrices and seed catalogs. |
+
+### Progressive Execution Layer:
+1. **With Laravel Boost / MCP Server:** Use `execute_artisan` (e.g. `lgu:audit --format=json --strict`), `get_database_schema`, and `get_routes`.
+2. **Standard Local Shell:** Run `php artisan lgu:audit --format=json --strict` via terminal.
+3. **Pure Agent Static Analysis:** When PHP CLI is absent, inspect workspace source files directly against the invariant rule patterns documented in the skills.
+
+To publish these skills into a host Laravel application:
+```bash
+php artisan lgu:install --ai-skills
+```
+
+---
+
 ## 🛡️ AI Agent Runbook: Updating the Package for Future OWASP Top 10 Versions
 
 When instructed to update this package for a new OWASP Top 10 revision (e.g., **OWASP Top 10:2028** or **OWASP Top 10:2029**), follow these exact 5 steps:

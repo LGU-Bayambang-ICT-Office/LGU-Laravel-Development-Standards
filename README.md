@@ -44,9 +44,39 @@ Published tags available:
 * `--tag=lgu-config`: Publishes `config/lgu.php`
 * `--tag=lgu-dev-tools`: Publishes `pint.json` and `phpstan.neon` (Level 5 preset) to project root
 * `--tag=lgu-ai-rules`: Publishes `.cursorrules`, `CLAUDE.md`, `.gemini/rules/lgu.md`, and `.github/copilot-instructions.md`
+* `--tag=lgu-ai-skills`: Publishes autonomous AI agent skills suite to `.agents/skills/` (`lgu-code-author`, `lgu-audit-reviewer`, `lgu-standards-maintainer`)
 * `--tag=lgu-docs`: Publishes `docs/LARAVEL_LGU_DEVELOPMENT_STANDARDS.md` and `docs/VENDOR_DELIVERY_CHECKLIST.md`
 * `--tag=lgu-migrations`: Publishes COA audit ledger table migrations and database triggers
 * `--tag=lgu-stubs`: Publishes customizable traits, casts, scopes, and middleware directly to `app/`
+
+To install the AI skills suite directly:
+```bash
+php artisan lgu:install --ai-skills
+```
+
+---
+
+## 🧠 Autonomous AI Agent Skills Suite (`.agents/skills/`)
+
+Beyond passive rule files, the package bundles three specialized agent skills that operate natively with **Laravel Boost** and the **Model Context Protocol (MCP)**:
+
+| Skill | Role | Key Capabilities |
+| :--- | :--- | :--- |
+| **`lgu-code-author`** | **Code Generation** | Scaffolds compliant migrations (Dual-ID `BIGINT id` + UUID), models with `EncryptedPii` + blind index, Action/Service boundaries, `afterCommit` listeners, and dedicated MVC show routes. |
+| **`lgu-audit-reviewer`** | **Audit & Reporting** | Executes compliance audits via MCP or CLI, conducts semantic inspection of flagged files, and produces executive Markdown audit reports with ready-to-apply code replacement diffs. |
+| **`lgu-standards-maintainer`** | **Regulatory Curation** | Autonomous research and update flow for future OWASP Top 10 releases and NPC Data Privacy circulars, updating mapping matrices and seed catalogs without manual intervention. |
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        AI AGENT EXECUTION FLOW                         │
+├────────────────────────────────────────────────────────────────────────┤
+│ 1. Developer prompts Agent ("Audit module" / "Build Citizen Permit")   │
+│ 2. Agent invokes Skill (lgu-code-author or lgu-audit-reviewer)         │
+│ 3. Agent leverages Laravel Boost / MCP (execute_artisan, get_routes)   │
+│ 4. Fallback: Agent inspects source files directly (Zero PHP runtime)   │
+│ 5. Agent outputs compliant code or executive Markdown audit report     │
+└────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 

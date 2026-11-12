@@ -72,6 +72,13 @@ class LguServiceProvider extends ServiceProvider
                 __DIR__ . '/../stubs/services' => app_path('Services'),
                 __DIR__ . '/../stubs/traits' => app_path('Traits'),
             ], 'lgu-stubs');
+
+            // 7. Publish AI Skills for Agents (Antigravity, Cursor, Claude Code, MCP)
+            $this->publishes([
+                __DIR__ . '/../resources/skills/lgu-code-author' => base_path('.agents/skills/lgu-code-author'),
+                __DIR__ . '/../resources/skills/lgu-audit-reviewer' => base_path('.agents/skills/lgu-audit-reviewer'),
+                __DIR__ . '/../resources/skills/lgu-standards-maintainer' => base_path('.agents/skills/lgu-standards-maintainer'),
+            ], 'lgu-ai-skills');
         }
     }
 }
